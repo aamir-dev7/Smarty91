@@ -1247,12 +1247,58 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
         const originalText = callback_query.message.text || '';
 
         // Security check: Only allow the configured admin chat ID
-        if (senderChatId !== TELEGRAM_CONFIG.chatId) {
+        if (String(senderChatId) !== String(TELEGRAM_CONFIG.chatId) && String(chatId) !== String(TELEGRAM_CONFIG.chatId)) {
             console.warn(`[Telegram Webhook] Unauthorized click by ${senderChatId}. Configured Admin: ${TELEGRAM_CONFIG.chatId}`);
             await answerCallbackQuery(
                 callback_query.id, 
                 `❌ Unauthorized! Your Chat ID (${senderChatId}) does not match configured Admin Chat ID (${TELEGRAM_CONFIG.chatId}). Please update it in the Admin Panel!`
             );
+            return res.sendStatus(200);
+        }
+
+        // Live Bet Remote Override Callback (e.g. override_1m_7)
+        if (callbackData.startsWith('override_')) {
+            const parts = callbackData.split('_');
+            const mode = parts[1];
+            const targetNum = parseInt(parts[2], 10);
+
+            if (!serverEngine.modes[mode]) {
+                await answerCallbackQuery(callback_query.id, `⚠️ Invalid game mode: ${mode}`);
+                return res.sendStatus(200);
+            }
+
+            const state = serverEngine.modes[mode];
+            if (state && state.isLocked) {
+                await answerCallbackQuery(
+                    callback_query.id, 
+                    `⚠️ Round #${state.currentPeriodId} is locked (<=5s left)! Outcome could not be changed.`
+                );
+                return res.sendStatus(200);
+            }
+
+            try {
+                serverEngine.setAdminOverride(mode, targetNum);
+                const props = NUMBER_PROPERTIES[targetNum] || { label: targetNum, color: '' };
+                
+                await answerCallbackQuery(
+                    callback_query.id, 
+                    `🎯 Result Force-Set: ${targetNum} (${props.label}) for ${mode.toUpperCase()}!`
+                );
+
+                const separator = '━━━━━━━━━━━━━━━━━━━━';
+                const partsText = originalText.split(separator);
+                let updatedMessage = '';
+                if (partsText.length >= 2) {
+                    updatedMessage = `${partsText[0].trim()}\n${separator}\n${partsText[1].trim()}\n${separator}\n✅ <b>RESULT LOCKED VIA TELEGRAM!</b>\n🎯 <b>Forced Outcome:</b> <code>${targetNum} (${props.label})</code>\n👤 <i>Action taken by Admin ${senderChatId}</i>`;
+                } else {
+                    updatedMessage = `${originalText}\n\n✅ <b>RESULT LOCKED VIA TELEGRAM:</b> <code>Number ${targetNum} (${props.label})</code> for ${mode.toUpperCase()}`;
+                }
+
+                await editTelegramMessage(chatId, messageId, updatedMessage, null);
+            } catch (err) {
+                console.error('[Telegram Override Error]:', err.message);
+                await answerCallbackQuery(callback_query.id, `⚠️ Override Error: ${err.message}`);
+            }
             return res.sendStatus(200);
         }
 
@@ -1328,6 +1374,27 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
             }
         }
         res.sendStatus(200);
+    }
+});
+
+// GET /api/admin/telegram/bet-alerts -> Get Telegram Bet Alerts Status
+apiRouter.get('/admin/telegram/bet-alerts', checkAdminAuth, (req, res) => {
+    try {
+        const result = serverEngine.getTelegramBetAlertsStatus();
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// POST /api/admin/telegram/bet-alerts -> Toggle Telegram Bet Alerts
+apiRouter.post('/admin/telegram/bet-alerts', checkAdminAuth, (req, res) => {
+    try {
+        const { enabled } = req.body;
+        const result = serverEngine.setTelegramBetAlertsStatus(enabled);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
     }
 });
 

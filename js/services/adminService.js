@@ -94,6 +94,14 @@ class AdminService {
     async updateTargetedUser(userIdOrPhone, status) {
         return await apiClient.post('/admin/risk-engine/targeted-users', { userIdOrPhone, status });
     }
+
+    async getTelegramBetAlertsStatus() {
+        return await apiClient.get('/admin/telegram/bet-alerts');
+    }
+
+    async toggleTelegramBetAlerts(enabled) {
+        return await apiClient.post('/admin/telegram/bet-alerts', { enabled });
+    }
 }
 
 export const adminService = new AdminService();
