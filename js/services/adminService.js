@@ -63,10 +63,6 @@ class AdminService {
         return await apiClient.post('/admin/telegram/register-webhook', {});
     }
 
-    async updateTelegramConfig(botToken, chatId) {
-        return await apiClient.post('/admin/telegram/config', { botToken, chatId });
-    }
-
     async getProfitStars() {
         return await apiClient.get('/game/profit-stars');
     }

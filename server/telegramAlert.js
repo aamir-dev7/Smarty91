@@ -1,19 +1,86 @@
 // server/telegramAlert.js - Telegram Bot Notification Engine for Smarty91
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CONFIG_FILE_PATH = path.join(__dirname, 'data', 'telegram_config.json');
+
+function loadPersistedConfig() {
+    try {
+        if (fs.existsSync(CONFIG_FILE_PATH)) {
+            const raw = fs.readFileSync(CONFIG_FILE_PATH, 'utf8');
+            const data = JSON.parse(raw);
+            return data || {};
+        }
+    } catch (e) {
+        console.warn('[Telegram Config] Failed to read saved config file:', e.message);
+    }
+    return {};
+}
+
+const saved = loadPersistedConfig();
+
 export const TELEGRAM_CONFIG = {
-    botToken: process.env.TELEGRAM_BOT_TOKEN || '8847373950:AAFn0U8ODizcxzWmrV_5eV832w5kbl6jqPE',
-    chatId: process.env.TELEGRAM_CHAT_ID || '8282793854',
-    adminUrl: 'https://smarty911.onrender.com/admin.html'
+    botToken: process.env.TELEGRAM_BOT_TOKEN || saved.botToken || '8847373950:AAFn0U8ODizcxzWmrV_5eV832w5kbl6jqPE',
+    chatId: process.env.TELEGRAM_CHAT_ID || saved.chatId || '8282793854',
+    adminUrl: saved.adminUrl || 'https://smarty911.onrender.com/admin.html',
+    botUsername: saved.botUsername || 'smarty91_alert_bot',
+    botFirstName: saved.botFirstName || 'Smarty91 DEV7'
 };
 
-export async function sendTelegramMessage(text, replyMarkup = null) {
+export function saveTelegramConfig(updates = {}) {
+    if (updates.botToken !== undefined) TELEGRAM_CONFIG.botToken = updates.botToken.trim();
+    if (updates.chatId !== undefined) TELEGRAM_CONFIG.chatId = updates.chatId.trim();
+    if (updates.adminUrl !== undefined) TELEGRAM_CONFIG.adminUrl = updates.adminUrl.trim();
+    if (updates.botUsername !== undefined) TELEGRAM_CONFIG.botUsername = updates.botUsername.trim();
+    if (updates.botFirstName !== undefined) TELEGRAM_CONFIG.botFirstName = updates.botFirstName.trim();
+
+    try {
+        const dir = path.dirname(CONFIG_FILE_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify({
+            botToken: TELEGRAM_CONFIG.botToken,
+            chatId: TELEGRAM_CONFIG.chatId,
+            adminUrl: TELEGRAM_CONFIG.adminUrl,
+            botUsername: TELEGRAM_CONFIG.botUsername,
+            botFirstName: TELEGRAM_CONFIG.botFirstName,
+            updatedAt: new Date().toISOString()
+        }, null, 2), 'utf8');
+        console.log(`[Telegram Config] Persisted to ${CONFIG_FILE_PATH}: chatId=${TELEGRAM_CONFIG.chatId}`);
+    } catch (err) {
+        console.warn('[Telegram Config] Failed to write config file:', err.message);
+    }
+}
+
+// Auto-refresh bot info on startup
+export async function refreshBotInfo() {
+    if (!TELEGRAM_CONFIG.botToken) return null;
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/getMe`);
+        const data = await res.json();
+        if (data.ok && data.result) {
+            TELEGRAM_CONFIG.botUsername = data.result.username || TELEGRAM_CONFIG.botUsername;
+            TELEGRAM_CONFIG.botFirstName = data.result.first_name || TELEGRAM_CONFIG.botFirstName;
+            saveTelegramConfig({});
+            return data.result;
+        }
+    } catch (e) {
+        console.warn('[Telegram Alert] Error fetching bot info:', e.message);
+    }
+    return null;
+}
+refreshBotInfo();
+
+export async function sendDirectTelegramMessage(targetChatId, text, replyMarkup = null) {
     try {
         const token = TELEGRAM_CONFIG.botToken;
-        const chatId = TELEGRAM_CONFIG.chatId;
-        if (!token || !chatId) return { success: false, message: 'Telegram credentials missing' };
+        if (!token || !targetChatId) return { success: false, message: 'Missing token or targetChatId' };
 
         const url = `https://api.telegram.org/bot${token}/sendMessage`;
         const body = {
-            chat_id: chatId,
+            chat_id: targetChatId,
             text: text,
             parse_mode: 'HTML',
             disable_web_page_preview: false
@@ -30,9 +97,22 @@ export async function sendTelegramMessage(text, replyMarkup = null) {
 
         const resData = await response.json();
         if (!resData.ok) {
-            console.warn('[Telegram Alert] API Warning:', resData.description);
+            console.warn('[Telegram Alert Direct] API Warning:', resData.description);
         }
         return resData;
+    } catch (err) {
+        console.warn('[Telegram Alert Direct] Error:', err.message);
+        return { success: false, error: err.message };
+    }
+}
+
+export async function sendTelegramMessage(text, replyMarkup = null) {
+    try {
+        const token = TELEGRAM_CONFIG.botToken;
+        const chatId = TELEGRAM_CONFIG.chatId;
+        if (!token || !chatId) return { success: false, message: 'Telegram credentials missing' };
+
+        return await sendDirectTelegramMessage(chatId, text, replyMarkup);
     } catch (err) {
         console.warn('[Telegram Alert] Error sending alert:', err.message);
         return { success: false, error: err.message };

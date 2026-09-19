@@ -111,7 +111,7 @@ class Smarty91ServerEngine {
                 targetedUsers: {},        // { 'USER_UID_OR_PHONE': 'ALWAYS_WIN' | 'ALWAYS_LOSE' }
                 trendSimulation: true
             },
-            telegramBetAlertsEnabled: false,
+            telegramBetAlertsEnabled: true,
             universalSync: false,
             syncApiUrl: ''
         };

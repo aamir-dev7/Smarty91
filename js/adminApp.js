@@ -7,6 +7,7 @@ let txFilterType = 'ALL';   // 'ALL' | 'DEPOSIT' | 'WITHDRAWAL'
 let txFilterStatus = 'ALL'; // 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'
 let txSearchQuery = '';
 let liveData = null;
+let telegramConfigState = null;
 let pollTimer = null;
 
 // Realtime Sound Alarm System (Web Audio API - 5-6 Second Siren Beep)
@@ -387,6 +388,15 @@ async function fetchAndRefreshData() {
         liveData = await adminService.getOverview();
         updateTopKpis(liveData.overview);
 
+        // Periodically refresh Telegram Config
+        if (!telegramConfigState || Math.random() < 0.15) {
+            adminService.getTelegramConfig().then(cfg => {
+                if (cfg && cfg.success) {
+                    telegramConfigState = cfg;
+                }
+            }).catch(() => {});
+        }
+
         // Realtime Cashier Notification & Alarm Check
         const txs = (liveData && liveData.recentTransactions) || [];
         const pendingTxs = txs.filter(t => t.status === 'PENDING');
@@ -709,9 +719,9 @@ function renderOutcomesView(container) {
                             When enabled, user bets trigger instant Telegram alerts with 0-9 buttons to remotely force outcomes.
                         </div>
                         <div style="font-size: 9.5px; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <span>📱 <b>Bot:</b> <code>@smarty91_alert_bot</code></span>
+                            <span>📱 <b>Bot:</b> <code>@${(telegramConfigState && telegramConfigState.botUsername) || 'smarty91_alert_bot'}</code></span>
                             <span>•</span>
-                            <span>🎯 <b>Active Target:</b> <code>8282793854</code> (Private DM)</span>
+                            <span>🎯 <b>Active Target:</b> <code>${(telegramConfigState && telegramConfigState.chatId) || '8282793854'}</code> (${((telegramConfigState && telegramConfigState.chatId) || '').startsWith('-100') ? 'Channel' : 'Chat'})</span>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -1469,44 +1479,76 @@ function renderCashierView(container) {
                 </div>
             </div>
 
-            <!-- Telegram Bot Status & Direct Test Controller -->
-            <div style="background: #111a2e; border: 1px solid #1e2c4f; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 15px;">🤖</span>
-                        <span style="font-weight: 800; font-size: 12px; color: #38bdf8;">TELEGRAM 24/7 INSTANT BOT ALERTS</span>
+            <!-- Telegram Bot Status & Direct Control Center -->
+            ${(() => {
+                const curBotName = (telegramConfigState && telegramConfigState.botUsername) || 'smarty91_alert_bot';
+                const curChatId = (telegramConfigState && telegramConfigState.chatId) || '8282793854';
+                const isChan = curChatId.startsWith('-100') || curChatId.startsWith('@');
+                return `
+                <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">🤖</span>
+                            <div>
+                                <div style="font-weight: 900; font-size: 13px; color: #38bdf8; letter-spacing: 0.5px;">TELEGRAM 24/7 INSTANT BOT ALERTS & REMOTE CONTROL</div>
+                                <div style="font-size: 11px; color: #94a3b8;">Deposits (Approve/Reject), Withdrawals & Live Bets (0-9 Remote Overrides)</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 11px; color: #10b981; font-weight: 800; background: rgba(16,185,129,0.15); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(16,185,129,0.3);">
+                            ● Bot: @${curBotName}
+                        </span>
                     </div>
-                    <span style="font-size: 10px; color: #10b981; font-weight: 800; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(16,185,129,0.3);">
-                        ● Active (Token Loaded)
-                    </span>
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
-                    Bot: <strong style="color: #fff;">@smarty91_alert_bot</strong> | Chat ID: <strong style="color: #facc15;">8282793854</strong>
-                </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" id="btn-telegram-test" class="btn-primary" style="flex: 1; min-width: 160px; font-size: 11px; padding: 8px 12px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                        <span>📲</span>
-                        <span>SEND TELEGRAM TEST MSG</span>
-                    </button>
-                    <a href="https://t.me/smarty91_alert_bot" target="_blank" class="btn-secondary" style="font-size: 11px; padding: 8px 12px; text-decoration: none; color: #94a3b8; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
-                        <span>🔗</span>
-                        <span>Open Bot (Click Start)</span>
-                    </a>
-                </div>
-                <div id="telegram-test-feedback" style="display: none; font-size: 11px; margin-top: 8px; padding: 6px 10px; border-radius: 6px; font-weight: 700;"></div>
 
-                <!-- Single-Click Setup Banner for Webhook Registration -->
-                <div style="margin-top: 10px; padding: 10px; background: rgba(56, 189, 248, 0.08); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-                    <div style="font-size: 11px; color: #cbd5e1; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-                        <span>⚡</span>
-                        <span>Bot Webhook (For Approve/Cancel Buttons):</span>
+                    <!-- Destination & Quick Connect Box -->
+                    <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                            <div style="font-size: 12px; color: #f1f5f9; font-weight: 700;">
+                                🎯 <strong>Target Telegram Destination (Chat ID / Channel ID):</strong>
+                            </div>
+                            <div style="font-size: 10.5px; color: #38bdf8; font-weight: 700; background: rgba(56,189,248,0.1); padding: 2px 8px; border-radius: 6px;">
+                                ${isChan ? '📢 Channel / Group Target' : '👤 Private DM Target'}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <input type="text" id="input-telegram-chat-id" class="form-input" value="${curChatId}" placeholder="Enter User ID (e.g. 8282793854) or Channel ID (-100xxxxxxxxxx)" style="flex: 1; min-width: 220px; font-size: 13px; font-family: monospace; background: #020617; color: #facc15; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; font-weight: bold;" />
+                            <button type="button" id="btn-save-telegram-chat-id" style="background: #0284c7; color: #fff; font-weight: 800; font-size: 12px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                <span>💾</span>
+                                <span>Save Target ID</span>
+                            </button>
+                        </div>
+
+                        <!-- Guidance note -->
+                        <div style="margin-top: 10px; font-size: 11px; color: #cbd5e1; line-height: 1.5; background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 6px;">
+                            💡 <strong>Notification Kyun Nhi Aa Raha Tha?</strong>
+                            <br/>• Target ID me pehle dusra ID set tha! Agar aapko <strong>Personal DM</strong> me alert chahiye to niche <strong>"⚡ 1-Tap Auto Connect"</strong> dabayein, bot me <strong>START</strong> click hote hi aapka account auto link ho jayega.
+                            <br/>• Agar <strong>Telegram Channel</strong> me alert chahiye, to pehle bot <code>@${curBotName}</code> ko channel me <strong>Admin</strong> banayein, fir channel ka numeric ID (jaise <code>-100...</code>) upar daal kar <strong>Save Target ID</strong> dabayein.
+                        </div>
                     </div>
-                    <button type="button" id="btn-telegram-webhook" style="font-size: 11px; padding: 6px 12px; background: #0ea5e9; color: #fff; font-weight: 800; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
-                        <span>Register Webhook 🔗</span>
-                    </button>
+
+                    <!-- Action Buttons Grid -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" id="btn-telegram-test" class="btn-primary" style="flex: 1; min-width: 180px; font-size: 11.5px; padding: 9px 14px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: 6px; cursor: pointer;">
+                            <span>📲</span>
+                            <span>SEND TEST ALERT NOW</span>
+                        </button>
+                        
+                        <a href="https://t.me/${curBotName}?start=admin_919191" target="_blank" class="btn-secondary" style="font-size: 11.5px; padding: 9px 14px; text-decoration: none; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800;">
+                            <span>⚡</span>
+                            <span>1-Tap Auto Connect (@${curBotName})</span>
+                        </a>
+
+                        <button type="button" id="btn-telegram-webhook" style="font-size: 11px; padding: 9px 12px; background: rgba(255,255,255,0.07); color: #cbd5e1; font-weight: 700; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <span>🔗</span>
+                            <span>Re-Register Webhook</span>
+                        </button>
+                    </div>
+
+                    <div id="telegram-test-feedback" style="display: none; font-size: 11.5px; margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-weight: 700; line-height: 1.5;"></div>
+                    <div id="telegram-webhook-feedback" style="display: none; font-size: 11px; margin-top: 6px; padding: 6px 10px; border-radius: 6px; font-weight: 700;"></div>
                 </div>
-                <div id="telegram-webhook-feedback" style="display: none; font-size: 11px; margin-top: 8px; padding: 6px 10px; border-radius: 6px; font-weight: 700;"></div>
-            </div>
+                `;
+            })()}
 
             <!-- Search and Filter Bar -->
             <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
@@ -1686,13 +1728,50 @@ function renderCashierView(container) {
         });
     });
 
+    // Telegram Target Chat ID / Channel ID Save Button
+    const saveChatIdBtn = container.querySelector('#btn-save-telegram-chat-id');
+    const chatIdInput = container.querySelector('#input-telegram-chat-id');
+    if (saveChatIdBtn && chatIdInput) {
+        saveChatIdBtn.addEventListener('click', async () => {
+            const newId = chatIdInput.value.trim();
+            if (!newId) {
+                alert('Please enter a valid User ID or Channel ID!');
+                return;
+            }
+            saveChatIdBtn.disabled = true;
+            saveChatIdBtn.textContent = 'Saving... ⏳';
+            try {
+                const res = await adminService.updateTelegramConfig({ chatId: newId });
+                if (res && res.success) {
+                    if (telegramConfigState) {
+                        telegramConfigState.chatId = res.chatId;
+                    }
+                    if (tgFeedback) {
+                        tgFeedback.style.display = 'block';
+                        tgFeedback.style.background = 'rgba(16, 185, 129, 0.15)';
+                        tgFeedback.style.color = '#10b981';
+                        tgFeedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                        tgFeedback.innerHTML = `✅ <strong>Target ID Saved Successfully: <code>${res.chatId}</code></strong><br/><span style="color: #cbd5e1; font-weight: normal;">Ab saare deposit, withdrawal aur bet alerts is target par jayenge. Abhi verify karne ke liye <b>SEND TEST ALERT NOW</b> dabayein!</span>`;
+                    }
+                } else {
+                    alert(`❌ Error saving: ${res.message}`);
+                }
+            } catch (err) {
+                alert(`❌ Error: ${err.message}`);
+            } finally {
+                saveChatIdBtn.disabled = false;
+                saveChatIdBtn.textContent = '💾 Save Target ID';
+            }
+        });
+    }
+
     // Telegram Bot Test Button
     const tgBtn = container.querySelector('#btn-telegram-test');
     const tgFeedback = container.querySelector('#telegram-test-feedback');
     if (tgBtn) {
         tgBtn.addEventListener('click', async () => {
             tgBtn.disabled = true;
-            tgBtn.textContent = 'Sending Test Msg...';
+            tgBtn.textContent = 'Sending Test Alert... ⏳';
             if (tgFeedback) tgFeedback.style.display = 'none';
 
             try {
@@ -1702,7 +1781,13 @@ function renderCashierView(container) {
                     tgFeedback.style.background = 'rgba(16, 185, 129, 0.15)';
                     tgFeedback.style.color = '#10b981';
                     tgFeedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-                    tgFeedback.textContent = '✅ Telegram test notification sent successfully to @smarty91_alert_bot!';
+                    tgFeedback.innerHTML = `✅ <strong>Test Alert Sent Successfully!</strong><br/>
+                    • <b>Delivered to Target ID:</b> <code>${res.targetChatId || (telegramConfigState && telegramConfigState.chatId) || 'Configured ID'}</code><br/>
+                    • <b>Sent via Bot:</b> @${res.botUsername || 'smarty91_alert_bot'}<br/>
+                    <div style="margin-top: 6px; font-size: 11px; color: #cbd5e1; font-weight: normal;">
+                        👉 <b>Agar aapko notification nahi mila:</b><br/>
+                        Iska matlab aapka real Telegram Chat ID upar wale Target ID se match nahi karta! <a href="https://t.me/${res.botUsername || 'smarty91_alert_bot'}?start=admin_919191" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">Yahan click karke bot me START dabayein</a>, aapka account automatic link ho jayega.
+                    </div>`;
                 }
             } catch (err) {
                 if (tgFeedback) {
@@ -1710,11 +1795,14 @@ function renderCashierView(container) {
                     tgFeedback.style.background = 'rgba(239, 68, 68, 0.15)';
                     tgFeedback.style.color = '#ef4444';
                     tgFeedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-                    tgFeedback.textContent = `❌ ${err.message || 'Failed to send Telegram message. Make sure you opened @smarty91_alert_bot and clicked START!'}`;
+                    tgFeedback.innerHTML = `❌ <strong>Failed to Send Alert:</strong> ${err.message || 'Telegram API Error'}<br/>
+                    <span style="font-size: 11px; color: #cbd5e1; font-weight: normal; margin-top: 4px; display: inline-block;">
+                        💡 <b>Fix:</b> Telegram policy ke mutabiq bot tab tak message nahi bhej sakta jab tak aap bot ko START na karein. Niche <b>1-Tap Auto Connect</b> dabayein aur bot me START dabayein!
+                    </span>`;
                 }
             } finally {
                 tgBtn.disabled = false;
-                tgBtn.textContent = '📲 SEND TELEGRAM TEST MSG';
+                tgBtn.textContent = '📲 SEND TEST ALERT NOW';
             }
         });
     }

@@ -1,7 +1,7 @@
 import express from 'express';
 import { serverEngine, NUMBER_PROPERTIES, MODE_DISPLAY_NAMES } from './engine.js';
 import { firebaseSync } from './firebaseSync.js';
-import { sendTelegramMessage, editTelegramMessage, answerCallbackQuery, TELEGRAM_CONFIG } from './telegramAlert.js';
+import { sendTelegramMessage, editTelegramMessage, answerCallbackQuery, sendDirectTelegramMessage, saveTelegramConfig, refreshBotInfo, TELEGRAM_CONFIG } from './telegramAlert.js';
 
 export const apiRouter = express.Router();
 apiRouter.use(express.json());
@@ -1151,11 +1151,19 @@ apiRouter.post('/admin/telegram/test', checkAdminAuth, async (req, res) => {
 
         const result = await sendTelegramMessage(testMsg);
         if (result && result.ok) {
-            return res.json({ success: true, message: `Test message sent successfully to your Telegram!${webhookResult}` });
+            return res.json({ 
+                success: true, 
+                message: `Test message sent successfully to your Telegram!${webhookResult}`,
+                targetChatId: TELEGRAM_CONFIG.chatId,
+                botUsername: TELEGRAM_CONFIG.botUsername,
+                messageId: result.result?.message_id
+            });
         } else {
             return res.status(400).json({
                 success: false,
-                message: (result?.description || 'Could not send message. Please make sure you have started the bot by clicking Start on @smarty91_alert_bot in Telegram.') + webhookResult
+                targetChatId: TELEGRAM_CONFIG.chatId,
+                botUsername: TELEGRAM_CONFIG.botUsername,
+                message: (result?.description || 'Could not send message. Please make sure you have started the bot by clicking Start on @' + TELEGRAM_CONFIG.botUsername + ' in Telegram, or check your Chat ID.') + webhookResult
             });
         }
     } catch (err) {
@@ -1167,8 +1175,11 @@ apiRouter.post('/admin/telegram/test', checkAdminAuth, async (req, res) => {
 apiRouter.get('/admin/telegram/config', checkAdminAuth, (req, res) => {
     res.json({
         success: true,
+        botToken: TELEGRAM_CONFIG.botToken || '',
         botTokenMasked: TELEGRAM_CONFIG.botToken ? `${TELEGRAM_CONFIG.botToken.slice(0, 10)}...${TELEGRAM_CONFIG.botToken.slice(-5)}` : '',
         chatId: TELEGRAM_CONFIG.chatId || '',
+        botUsername: TELEGRAM_CONFIG.botUsername || 'smarty91_alert_bot',
+        botFirstName: TELEGRAM_CONFIG.botFirstName || 'Smarty91 DEV7',
         alertsEnabled: !!(serverEngine.config && serverEngine.config.telegramBetAlertsEnabled)
     });
 });
@@ -1180,6 +1191,12 @@ apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
         if (botToken) TELEGRAM_CONFIG.botToken = botToken.trim();
         if (chatId) TELEGRAM_CONFIG.chatId = chatId.trim();
         
+        saveTelegramConfig({
+            botToken: TELEGRAM_CONFIG.botToken,
+            chatId: TELEGRAM_CONFIG.chatId
+        });
+        await refreshBotInfo();
+
         // Auto register/set webhook on Telegram so inline buttons work!
         let publicHttpsBase = (req.secure || req.headers['x-forwarded-proto'] === 'https') ? `https://${req.get('host')}` : null;
         if (!publicHttpsBase && TELEGRAM_CONFIG.adminUrl && TELEGRAM_CONFIG.adminUrl.startsWith('https://')) {
@@ -1213,6 +1230,7 @@ apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
             success: true,
             message: `Telegram settings updated${webhookStatus}`,
             chatId: TELEGRAM_CONFIG.chatId,
+            botUsername: TELEGRAM_CONFIG.botUsername,
             botTokenMasked: TELEGRAM_CONFIG.botToken ? `${TELEGRAM_CONFIG.botToken.slice(0, 8)}...` : ''
         });
     } catch (err) {
@@ -1265,7 +1283,58 @@ apiRouter.post('/admin/telegram/register-webhook', checkAdminAuth, async (req, r
 // POST /api/telegram/webhook -> Handle Inline Buttons (Approve/Reject) click from Telegram
 apiRouter.post('/telegram/webhook', async (req, res) => {
     try {
-        const { callback_query } = req.body;
+        const { callback_query, message } = req.body;
+
+        // 1. Handle incoming text messages (/start, /connect 919191, etc.)
+        if (message) {
+            const chatId = message.chat.id;
+            const text = (message.text || '').trim();
+            const fromUser = message.from || {};
+            const senderName = fromUser.first_name || fromUser.username || 'Admin';
+
+            console.log(`[Telegram Webhook Msg] from ${senderName} (Chat: ${chatId}): "${text}"`);
+
+            // Handle pairing command
+            if (text.startsWith('/connect') || text.startsWith('/start admin_')) {
+                const pin = text.startsWith('/start admin_') ? text.replace('/start admin_', '').trim() : text.replace('/connect', '').trim();
+                if (pin === '919191' || pin === serverEngine.masterPin || pin === 'Smarty071') {
+                    TELEGRAM_CONFIG.chatId = String(chatId);
+                    saveTelegramConfig({ chatId: String(chatId) });
+                    await sendDirectTelegramMessage(
+                        chatId,
+                        `🎉 <b>SMARTY91 ADMIN LINKED SUCCESSFULLY!</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Admin:</b> ${senderName}\n🆔 <b>Your Chat ID:</b> <code>${chatId}</code>\n🤖 <b>Bot:</b> @${TELEGRAM_CONFIG.botUsername}\n━━━━━━━━━━━━━━━━━━━━\n✅ <b>All Alerts Connected:</b>\n• 🎮 <b>Live Bets</b> (with 0-9 remote control buttons)\n• 📥 <b>Deposits</b> (with Approve/Reject)\n• 📤 <b>Withdrawals</b>\n\nAb jab bhi koi player bet lagayega ya deposit karega, turant yahan alert aayega!`
+                    );
+                    return res.sendStatus(200);
+                } else {
+                    await sendDirectTelegramMessage(
+                        chatId,
+                        `❌ <b>Invalid PIN!</b>\n\nAdmin connect karne ke liye correct PIN enter karein:\n<code>/connect 919191</code>`
+                    );
+                    return res.sendStatus(200);
+                }
+            }
+
+            // Regular /start
+            if (text === '/start' || text.startsWith('/start')) {
+                await sendDirectTelegramMessage(
+                    chatId,
+                    `👋 <b>Welcome to Smarty91 Alerts Bot!</b>\n━━━━━━━━━━━━━━━━━━━━\n🔢 <b>Your Telegram Chat ID is:</b> <code>${chatId}</code>\n👤 <b>Name:</b> ${senderName} (@${fromUser.username || 'user'})\n━━━━━━━━━━━━━━━━━━━━\n👉 <b>Abhi connect karne ke 2 aasan tareeqe:</b>\n\n1️⃣ <b>Instant Connect (1-Tap):</b>\nNiche diye command par tap karein aur send karein:\n<code>/connect 919191</code>\n\n2️⃣ <b>Ya Admin Panel me:</b>\nApna Chat ID <code>${chatId}</code> copy karein aur Admin Panel (Cashier / Outcomes) me daal kar <b>Save</b> karein!`
+                );
+                return res.sendStatus(200);
+            }
+
+            // If added to a Channel or Group
+            if (message.chat.type === 'channel' || message.chat.type === 'supergroup' || message.chat.type === 'group') {
+                await sendDirectTelegramMessage(
+                    chatId,
+                    `📢 <b>Smarty91 Bot Connected to Channel/Group!</b>\n━━━━━━━━━━━━━━━━━━━━\n🆔 <b>Channel/Group ID:</b> <code>${chatId}</code>\n\nIs ID ko Admin Panel me Chat ID box me daalein aur Save karein!`
+                );
+                return res.sendStatus(200);
+            }
+
+            return res.sendStatus(200);
+        }
+
         if (!callback_query) {
             return res.sendStatus(200);
         }
