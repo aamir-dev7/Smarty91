@@ -706,10 +706,21 @@ function renderOutcomesView(container) {
                             <span>Telegram Live Bet Alerts & Remote 0-9 Force Overrides</span>
                         </div>
                         <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">
-                            When enabled, every user bet instantly alerts your Telegram with 0-9 buttons to remotely force the outcome.
+                            When enabled, user bets trigger instant Telegram alerts with 0-9 buttons to remotely force outcomes.
+                        </div>
+                        <div style="font-size: 9.5px; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span>📱 <b>Bot:</b> <code>@smarty91_alert_bot</code></span>
+                            <span>•</span>
+                            <span>🎯 <b>Active Target:</b> <code>8282793854</code> (Private DM)</span>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <button id="btn-test-telegram-alert" type="button" class="btn-secondary" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; font-weight: 700; padding: 5px 10px; cursor: pointer;" title="Send an immediate test alert to verify Telegram connection">
+                            📲 Test Alert
+                        </button>
+                        <button id="btn-config-telegram" type="button" class="btn-secondary" style="background: rgba(255,255,255,0.08); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); font-size: 10px; font-weight: 700; padding: 5px 10px; cursor: pointer;" title="Change Bot Token or Channel/Chat ID">
+                            ⚙️ Set Chat/Channel ID
+                        </button>
                         <span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color: ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'var(--accent-green)' : 'var(--accent-red)'}; border: 1px solid ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'var(--accent-green)' : 'var(--accent-red)'};">
                             ${liveData.config && liveData.config.telegramBetAlertsEnabled ? 'ALERTS ON' : 'ALERTS OFF'}
                         </span>
@@ -952,6 +963,52 @@ function renderOutcomesView(container) {
                 alert(`❌ Error updating Telegram alert settings: ${err.message}`);
             } finally {
                 tgAlertBtn.disabled = false;
+            }
+        });
+    }
+
+    // Send Test Alert Button Listener
+    const testTgBtn = container.querySelector('#btn-test-telegram-alert');
+    if (testTgBtn) {
+        testTgBtn.addEventListener('click', async () => {
+            testTgBtn.disabled = true;
+            testTgBtn.textContent = 'Sending...';
+            try {
+                const res = await adminService.sendTelegramTest();
+                if (res && res.success) {
+                    alert(`✅ Test Alert Sent Successfully!\n\nTarget: ${res.chatId || 'Chat/Channel'}\nMessage ID: ${res.result ? res.result.message_id : 'Delivered'}\n\n👉 Apne Telegram par check karein: Agar personal chat hai to @smarty91_alert_bot par aaya hoga, ya fir configured channel me!`);
+                } else {
+                    alert(`❌ Failed to send test alert: ${res ? res.message : 'Unknown error'}`);
+                }
+            } catch (err) {
+                alert(`❌ Telegram Test Alert Error: ${err.message}`);
+            } finally {
+                testTgBtn.disabled = false;
+                testTgBtn.textContent = '📲 Test Alert';
+            }
+        });
+    }
+
+    // Configure Bot / Chat ID Button Listener
+    const configTgBtn = container.querySelector('#btn-config-telegram');
+    if (configTgBtn) {
+        configTgBtn.addEventListener('click', async () => {
+            const currentChatId = prompt(
+                "Enter Telegram Target Chat ID or Channel ID:\n\n• For Personal DM: Enter your numeric User ID (e.g. 8282793854) and start @smarty91_alert_bot.\n• For Channel: Add @smarty91_alert_bot as ADMIN to your channel and enter channel ID (e.g. -100xxxxxxxxxx or @channelname).",
+                "8282793854"
+            );
+            if (!currentChatId || !currentChatId.trim()) return;
+
+            try {
+                const res = await adminService.updateTelegramConfig({ chatId: currentChatId.trim() });
+                if (res && res.success) {
+                    alert(`✅ Telegram Destination Updated!\n\nTarget Chat ID: ${res.chatId}\n${res.message}`);
+                    renderActiveTab(false);
+                } else {
+                    alert(`❌ Error updating Telegram config: ${res.message}`);
+                }
+            } catch (err) {
+                alert(`❌ Error: ${err.message}`);
             }
         });
     }

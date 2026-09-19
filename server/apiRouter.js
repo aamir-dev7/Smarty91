@@ -1120,27 +1120,32 @@ apiRouter.post('/admin/telegram/test', checkAdminAuth, async (req, res) => {
 ━━━━━━━━━━━━━━━━━━━━
 👉 <a href="${TELEGRAM_CONFIG.adminUrl}">Open Admin Cashier</a>`;
 
-        // Attempt webhook registration during test to auto-fix missing setup
-        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-        const host = req.get('host');
-        const webhookUrl = `${protocol}://${host}/api/telegram/webhook`;
-        
+        // Attempt webhook registration using public HTTPS domain
+        let publicHttpsBase = (req.secure || req.headers['x-forwarded-proto'] === 'https') ? `https://${req.get('host')}` : null;
+        if (!publicHttpsBase && TELEGRAM_CONFIG.adminUrl && TELEGRAM_CONFIG.adminUrl.startsWith('https://')) {
+            try {
+                const u = new URL(TELEGRAM_CONFIG.adminUrl);
+                publicHttpsBase = u.origin;
+            } catch (e) {}
+        }
+
         let webhookResult = '';
-        if (TELEGRAM_CONFIG.botToken) {
+        if (TELEGRAM_CONFIG.botToken && publicHttpsBase) {
+            const webhookUrl = `${publicHttpsBase}/api/telegram/webhook`;
             try {
                 const registerUrl = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`;
                 const regRes = await fetch(registerUrl);
                 const regData = await regRes.json();
                 if (regData.ok) {
-                    webhookResult = ' (Auto-registered Telegram Webhook!)';
+                    webhookResult = ` (Webhook registered to ${webhookUrl})`;
                     console.log(`[Telegram Webhook] Webhook auto-set to ${webhookUrl}`);
                 } else {
-                    webhookResult = ` (Webhook registration warning: ${regData.description})`;
-                    console.warn(`[Telegram Webhook] Failed auto-set:`, regData.description);
+                    webhookResult = ` (Webhook registration notice: ${regData.description})`;
+                    console.warn(`[Telegram Webhook] Notice:`, regData.description);
                 }
             } catch (webhookErr) {
                 webhookResult = ` (Webhook error: ${webhookErr.message})`;
-                console.warn(`[Telegram Webhook] Error during setWebhook:`, webhookErr.message);
+                console.warn(`[Telegram Webhook] Error:`, webhookErr.message);
             }
         }
 
@@ -1158,6 +1163,16 @@ apiRouter.post('/admin/telegram/test', checkAdminAuth, async (req, res) => {
     }
 });
 
+// GET /api/admin/telegram/config -> Get current bot and chat id
+apiRouter.get('/admin/telegram/config', checkAdminAuth, (req, res) => {
+    res.json({
+        success: true,
+        botTokenMasked: TELEGRAM_CONFIG.botToken ? `${TELEGRAM_CONFIG.botToken.slice(0, 10)}...${TELEGRAM_CONFIG.botToken.slice(-5)}` : '',
+        chatId: TELEGRAM_CONFIG.chatId || '',
+        alertsEnabled: !!(serverEngine.config && serverEngine.config.telegramBetAlertsEnabled)
+    });
+});
+
 // POST /api/admin/telegram/config -> Update Bot Token or Chat ID
 apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
     try {
@@ -1166,12 +1181,17 @@ apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
         if (chatId) TELEGRAM_CONFIG.chatId = chatId.trim();
         
         // Auto register/set webhook on Telegram so inline buttons work!
-        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-        const host = req.get('host');
-        const webhookUrl = `${protocol}://${host}/api/telegram/webhook`;
+        let publicHttpsBase = (req.secure || req.headers['x-forwarded-proto'] === 'https') ? `https://${req.get('host')}` : null;
+        if (!publicHttpsBase && TELEGRAM_CONFIG.adminUrl && TELEGRAM_CONFIG.adminUrl.startsWith('https://')) {
+            try {
+                const u = new URL(TELEGRAM_CONFIG.adminUrl);
+                publicHttpsBase = u.origin;
+            } catch (e) {}
+        }
         
         let webhookStatus = '';
-        if (TELEGRAM_CONFIG.botToken) {
+        if (TELEGRAM_CONFIG.botToken && publicHttpsBase) {
+            const webhookUrl = `${publicHttpsBase}/api/telegram/webhook`;
             try {
                 const registerUrl = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`;
                 const regRes = await fetch(registerUrl);
@@ -1180,12 +1200,12 @@ apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
                     webhookStatus = ' and Inline Button Webhook registered successfully!';
                     console.log(`[Telegram Webhook] Webhook set to ${webhookUrl}`);
                 } else {
-                    webhookStatus = ` but Inline Webhook registration failed: ${regData.description}`;
-                    console.warn(`[Telegram Webhook] Failed to set webhook:`, regData.description);
+                    webhookStatus = ` (Webhook notice: ${regData.description})`;
+                    console.warn(`[Telegram Webhook] Notice:`, regData.description);
                 }
             } catch (webhookErr) {
-                webhookStatus = ` but Inline Webhook setup errored: ${webhookErr.message}`;
-                console.warn(`[Telegram Webhook] Error during setWebhook:`, webhookErr.message);
+                webhookStatus = ` (Webhook error: ${webhookErr.message})`;
+                console.warn(`[Telegram Webhook] Error:`, webhookErr.message);
             }
         }
 
@@ -1203,9 +1223,19 @@ apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
 // POST /api/admin/telegram/register-webhook -> Explicit Webhook Registration
 apiRouter.post('/admin/telegram/register-webhook', checkAdminAuth, async (req, res) => {
     try {
-        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-        const host = req.get('host');
-        const webhookUrl = `${protocol}://${host}/api/telegram/webhook`;
+        let publicHttpsBase = (req.secure || req.headers['x-forwarded-proto'] === 'https') ? `https://${req.get('host')}` : null;
+        if (!publicHttpsBase && TELEGRAM_CONFIG.adminUrl && TELEGRAM_CONFIG.adminUrl.startsWith('https://')) {
+            try {
+                const u = new URL(TELEGRAM_CONFIG.adminUrl);
+                publicHttpsBase = u.origin;
+            } catch (e) {}
+        }
+
+        if (!publicHttpsBase) {
+            return res.status(400).json({ success: false, message: 'Could not determine HTTPS URL for Webhook. An HTTPS domain is required by Telegram.' });
+        }
+
+        const webhookUrl = `${publicHttpsBase}/api/telegram/webhook`;
         
         if (!TELEGRAM_CONFIG.botToken) {
             return res.status(400).json({ success: false, message: 'Bot Token is not configured! Please configure Telegram Bot first.' });

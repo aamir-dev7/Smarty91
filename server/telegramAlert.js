@@ -146,19 +146,21 @@ export async function notifyNewWithdrawal({ userId, phone, amount, accountHolder
     return sendTelegramMessage(message, inlineKeyboard);
 }
 
-export async function notifyNewBet({ mode, periodId, phone, userId, betAmount, selection, selectionLabel, remainingSec }) {
+export async function notifyNewBet({ mode, periodId, phone, userId, betAmount, totalAmount, selection, selectionLabel, remainingSec, remainingSeconds }) {
     const timeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const choiceText = selectionLabel || selection;
-    const modeUpper = String(mode).toUpperCase();
+    const choiceText = selectionLabel || selection || 'N/A';
+    const modeUpper = String(mode || '30s').toUpperCase();
+    const amountVal = Number(betAmount !== undefined ? betAmount : (totalAmount !== undefined ? totalAmount : 0));
+    const secondsLeft = remainingSec !== undefined ? remainingSec : (remainingSeconds !== undefined ? remainingSeconds : 0);
 
     const message = `🚨 <b>LIVE BET PLACED! (Smarty91)</b>
 ━━━━━━━━━━━━━━━━━━━━
 🎮 <b>Mode:</b> <code>${modeUpper}</code>
-🔢 <b>Period ID:</b> <code>${periodId}</code>
-👤 <b>Player:</b> <code>${phone || userId}</code>
-💰 <b>Bet Amount:</b> <b>₹${Number(betAmount).toLocaleString('en-IN')}</b>
+🔢 <b>Period ID:</b> <code>${periodId || 'N/A'}</code>
+👤 <b>Player:</b> <code>${phone || userId || 'Player'}</code>
+💰 <b>Bet Amount:</b> <b>₹${amountVal.toLocaleString('en-IN')}</b>
 🎯 <b>Choice:</b> <b>${choiceText}</b>
-⏳ <b>Time Left:</b> ~${remainingSec || 0}s (${timeStr})
+⏳ <b>Time Left:</b> ~${secondsLeft}s (${timeStr})
 ━━━━━━━━━━━━━━━━━━━━
 ⚡ <b>Tap a Number below to Force Outcome:</b>`;
 

@@ -102,6 +102,18 @@ class AdminService {
     async toggleTelegramBetAlerts(enabled) {
         return await apiClient.post('/admin/telegram/bet-alerts', { enabled });
     }
+
+    async getTelegramConfig() {
+        return await apiClient.get('/admin/telegram/config');
+    }
+
+    async updateTelegramConfig(payload) {
+        return await apiClient.post('/admin/telegram/config', payload);
+    }
+
+    async sendTelegramTest() {
+        return await apiClient.post('/admin/telegram/test', {});
+    }
 }
 
 export const adminService = new AdminService();
