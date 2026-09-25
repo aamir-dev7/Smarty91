@@ -5,7 +5,7 @@ let currentDepositAmount = 200;
 let currentBonusAmount = 200;
 let selectedChannel = 'USDT_BEP20';
 let currentPlatform = 'USDT';
-let currentDepositAmountUsdt = 5;
+let currentDepositAmountUsdt = 3;
 let countdownInterval = null;
 let secondsRemaining = 600; // 10 minutes
 let currentWalletSummary = null;
@@ -395,7 +395,7 @@ function updateUsdtBonusPreviewCard() {
         liveTextEl.innerText = `${currentDepositAmountUsdt} USDT = ₹${Math.round(inrValue).toLocaleString('en-IN')}`;
     }
 
-    if (currentDepositAmountUsdt >= 5) {
+    if (currentDepositAmountUsdt >= 3) {
         if (titleEl) {
             titleEl.innerHTML = `<span>100% USDT Match Bonus</span> <span class="bonus-coupon-tag" style="background: #10b981;">COUPON APPLIED</span>`;
         }
@@ -403,9 +403,9 @@ function updateUsdtBonusPreviewCard() {
         if (amtEl) amtEl.innerText = `+₹${bonusInr.toLocaleString('en-IN')}`;
     } else {
         if (titleEl) {
-            titleEl.innerHTML = `<span>Minimum USDT Deposit is 5</span>`;
+            titleEl.innerHTML = `<span>Minimum USDT Deposit is 3</span>`;
         }
-        if (descEl) descEl.innerText = 'Please select at least 5 USDT to receive instant 100% Match Bonus';
+        if (descEl) descEl.innerText = 'Please select at least 3 USDT to receive instant 100% Match Bonus';
         if (amtEl) amtEl.innerText = '+₹0';
     }
 }
@@ -436,8 +436,8 @@ window.startDepositCheckoutPhase = function() {
             return;
         }
     } else {
-        if (currentDepositAmountUsdt < 5) {
-            showToast('Minimum deposit amount is 5 USDT');
+        if (currentDepositAmountUsdt < 3) {
+            showToast('Minimum deposit amount is 3 USDT');
             return;
         }
     }

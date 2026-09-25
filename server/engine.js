@@ -2545,8 +2545,8 @@ class Smarty91ServerEngine {
             const usdtVal = Number(verifiedTx.value) / Math.pow(10, rawDecimals);
             const numAmount = Math.round(usdtVal * conversionRate);
 
-            if (numAmount < 200) {
-                throw new Error(`Transaction verified ($${usdtVal} USDT = ₹${numAmount}), but minimum deposit is ₹200`);
+            if (usdtVal < 3) {
+                throw new Error(`Transaction verified ($${usdtVal} USDT), but minimum deposit is 3 USDT`);
             }
 
             let bonusAmount = 0;
@@ -2617,7 +2617,11 @@ class Smarty91ServerEngine {
             };
         } else {
             const estimatedUsdt = Number(amountUsdt) || 0;
-            const numAmount = estimatedUsdt > 0 ? Math.round(estimatedUsdt * conversionRate) : 200;
+            if (estimatedUsdt > 0 && estimatedUsdt < 3) {
+                throw new Error('Minimum deposit amount is 3 USDT');
+            }
+            const activeEstimated = estimatedUsdt >= 3 ? estimatedUsdt : 3;
+            const numAmount = Math.round(activeEstimated * conversionRate);
             
             let bonusAmount = 0;
             if (numAmount >= 200) bonusAmount = 200;

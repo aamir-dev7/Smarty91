@@ -1278,7 +1278,7 @@
                                         <span style="font-size: 0.58rem; font-weight: 800; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 3px;">AUTOMATIC</span>
                                     </div>
                                     <div class="channel-info-sub" style="font-size: 0.64rem; margin-top: 2px;">USDT BEP20 (BSC Smart Chain Protocol)</div>
-                                    <div class="channel-info-sub" style="font-size: 0.64rem; color: #34d399; font-weight: 700; margin-top: 1px;">Min Deposit: 5 USDT • 0% Protocol Fee</div>
+                                    <div class="channel-info-sub" style="font-size: 0.64rem; color: #34d399; font-weight: 700; margin-top: 1px;">Min Deposit: 3 USDT • 0% Protocol Fee</div>
                                 </div>
                             </div>
                         </div>
@@ -1421,12 +1421,22 @@
                         <div class="glass-panel" style="padding: 10px;">
                             <div class="panel-heading" style="margin-bottom: 8px;">
                                 <span>Select Tether (USDT) Amount</span>
-                                <span style="font-size: 0.65rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.1); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.3);">Min 5 USDT</span>
+                                <span style="font-size: 0.65rem; color: #10b981; font-weight: 700; background: rgba(16,185,129,0.1); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(16,185,129,0.3);">Min 3 USDT</span>
                             </div>
 
                             <!-- USDT Quick Select Grid -->
                             <div class="amount-selection-grid">
-                                <div class="amount-pill-card selected" onclick="selectDepositAmountUsdt(5)">
+                                <div class="amount-pill-card selected" onclick="selectDepositAmountUsdt(3)">
+                                    <span class="pill-bonus-badge" style="background: var(--red-primary); box-shadow: 0 2px 6px rgba(229, 24, 55, 0.5);">100% BONUS</span>
+                                    <span class="pill-amount-text" style="font-size: 0.95rem; display: inline-flex; align-items: center; gap: 4px;">
+                                        <svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="flex-shrink: 0;">
+                                            <circle cx="16" cy="16" r="16" fill="#26A17B"/>
+                                            <path d="M17.9 14.8v-1.6h5.3V10H8.8v3.2h5.3v1.6c-4.4.2-7.7 1.1-7.7 2.2 0 1.1 3.3 2 7.7 2.2v5.1h3.8v-5.1c4.4-.2 7.7-1.1 7.7-2.2 0-1.1-3.3-2-7.7-2.2zm-1.9 3.1c-3.1 0-5.7-.6-5.7-1.3s2.6-1.3 5.7-1.3 5.7.6 5.7 1.3-2.6 1.3-5.7 1.3z" fill="#FFF"/>
+                                        </svg>
+                                        $3 USDT
+                                    </span>
+                                </div>
+                                <div class="amount-pill-card" onclick="selectDepositAmountUsdt(5)">
                                     <span class="pill-bonus-badge" style="background: var(--red-primary); box-shadow: 0 2px 6px rgba(229, 24, 55, 0.5);">100% BONUS</span>
                                     <span class="pill-amount-text" style="font-size: 0.95rem; display: inline-flex; align-items: center; gap: 4px;">
                                         <svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="flex-shrink: 0;">
@@ -1501,17 +1511,18 @@
                             <!-- USDT to INR Live Conversion Display Box -->
                             <div id="usdt-conversion-live-box" style="background: rgba(16,185,129,0.08); border: 1.2px solid rgba(16,185,129,0.45); border-radius: 10px; padding: 6px 12px; margin-bottom: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 800; color: #10b981; box-shadow: 0 1px 3px rgba(0,0,0,0.15); width: max-content; max-width: 100%; transition: all 0.2s ease-out; box-sizing: border-box;">
 
-                                <span id="usdt-to-inr-live-text" style="font-family: monospace; font-size: 0.86rem; color: #10b981;">5 USDT = ₹510</span>
+                                <span id="usdt-to-inr-live-text" style="font-family: monospace; font-size: 0.86rem; color: #10b981;">3 USDT = ₹306</span>
                             </div>
 
                             <!-- Custom Input (USDT) -->
                             <div class="currency-input-wrapper" style="padding: 6px 10px; border-color: rgba(16,185,129,0.3);">
                                 <span class="currency-prefix" style="color: #34d399;">$</span>
-                                <input type="number" id="custom-deposit-usdt-input" class="custom-number-input" placeholder="Or enter custom USDT (Min 5)" value="5" min="5" max="5000" oninput="handleCustomDepositUsdtChange(this.value)" style="font-size: 0.9rem;">
+                                <input type="number" id="custom-deposit-usdt-input" class="custom-number-input" placeholder="Or enter custom USDT (Min 3)" value="3" min="3" max="5000" oninput="handleCustomDepositUsdtChange(this.value)" style="font-size: 0.9rem;">
                                 <span style="font-size: 0.72rem; color: #34d399; font-weight: 800; font-family: monospace; white-space: nowrap; margin-left: 6px;">USDT</span>
                             </div>
 
                             <div class="quick-chips-row">
+                                <button type="button" class="quick-chip-btn" onclick="addCustomUsdtVal(3)" style="border-color: rgba(16,185,129,0.2);">+$3</button>
                                 <button type="button" class="quick-chip-btn" onclick="addCustomUsdtVal(5)" style="border-color: rgba(16,185,129,0.2);">+$5</button>
                                 <button type="button" class="quick-chip-btn" onclick="addCustomUsdtVal(10)" style="border-color: rgba(16,185,129,0.2);">+$10</button>
                                 <button type="button" class="quick-chip-btn" onclick="addCustomUsdtVal(50)" style="border-color: rgba(16,185,129,0.2);">+$50</button>
