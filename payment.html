@@ -1307,99 +1307,88 @@
                             </div>
                             <div class="channels-grid" style="grid-template-columns: repeat(2, 1fr); gap: 8px;">
                                 <!-- PhonePe Official Brand Card -->
-                                <div class="payment-channel-card selected" onclick="selectPaymentChannel('PHONEPE', this)">
-                                    <div class="channel-icon-box" style="background: #5f259f; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(95,37,159,0.4);">
-                                        <svg width="26" height="26" viewBox="0 0 100 100" fill="none">
-                                            <rect width="100" height="100" rx="20" fill="#5F259F"/>
-                                            <path d="M72.5 38.5c-4.2-1.8-9.8-2.7-16.7-2.7h-18v52.4h11.2V68.8h6.8c6.6 0 12-1 16.2-3.1 4.2-2.1 7.4-5.3 9.4-9.6 2-4.3 3-9.5 3-15.6 0-6.2-1-11.4-3.1-15.6-2.1-4.2-5.3-7.5-9.5-9.6l10.7-18.4c-4.2-2.3-8.8-3.5-13.8-3.5-3.1 0-6 .5-8.8 1.4L72.5 38.5zm-5.4 20.8c-1.3 2.5-3.4 4.3-6.2 5.3-2.8 1-6.5 1.5-11.1 1.5h-4.2V46.3h4.2c4.6 0 8.3.5 11.1 1.5 2.8 1 4.9 2.8 6.2 5.3 1.3 2.5 2 5.5 2 9s-.7 6.5-2 9z" fill="#FFFFFF"/>
-                                        </svg>
+                                <div class="payment-channel-card selected" onclick="selectPaymentChannel('PHONEPE', this)" style="padding: 7px 8px; gap: 7px;">
+                                    <div class="channel-icon-box" style="background: #5f259f; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(95,37,159,0.4); flex-shrink: 0;">
+                                        <span style="color: #ffffff; font-size: 1.15rem; font-weight: 900; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1;">P</span>
                                     </div>
-                                    <div>
-                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">PhonePe</div>
-                                        <div class="channel-info-sub">Direct App Pay ⚡</div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">PhonePe</div>
+                                        <div class="channel-info-sub" style="font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">Direct App Pay ⚡</div>
                                     </div>
                                 </div>
 
                                 <!-- Google Pay Official Brand Card -->
-                                <div class="payment-channel-card" onclick="selectPaymentChannel('GPAY', this)">
-                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                        <svg width="28" height="28" viewBox="0 0 48 48">
-                                            <!-- Official Google Pay G-Pay multi-color logo -->
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('GPAY', this)" style="padding: 7px 8px; gap: 7px;">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 8px; padding: 2px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0;">
+                                        <svg width="22" height="22" viewBox="0 0 48 48">
                                             <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h11.9c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.8-9.8 6.8-16.5z"/>
                                             <path fill="#34A853" d="M24 46c6.2 0 11.4-2.1 15.2-5.6l-7.3-5.6c-2.1 1.4-4.7 2.2-7.9 2.2-6.1 0-11.2-4.1-13-9.6H3.4v5.8C7.2 40.8 15 46 24 46z"/>
                                             <path fill="#FBBC05" d="M11 27.4c-.5-1.4-.8-2.9-.8-4.4s.3-3 .8-4.4V12.8H3.4C1.2 17.2 0 22.2 0 27.4s1.2 10.2 3.4 14.6l7.6-5.8z"/>
                                             <path fill="#EA4335" d="M24 8.8c3.4 0 6.4 1.2 8.8 3.4l6.6-6.6C35.4 1.9 30.2 0 24 0 15 0 7.2 5.2 3.4 12.8l7.6 5.8c1.8-5.5 6.9-9.6 13-9.6z"/>
                                         </svg>
                                     </div>
-                                    <div>
-                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">Google Pay</div>
-                                        <div class="channel-info-sub">UPI Fast Flow ⚡</div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Google Pay</div>
+                                        <div class="channel-info-sub" style="font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">UPI Fast Flow ⚡</div>
                                     </div>
                                 </div>
 
                                 <!-- Paytm Official Brand Card -->
-                                <div class="payment-channel-card" onclick="selectPaymentChannel('PAYTM', this)">
-                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,46,110,0.2);">
-                                        <svg width="32" height="18" viewBox="0 0 100 40" fill="none">
-                                            <!-- Official Paytm Dual Color Wordmark -->
-                                            <!-- Pay in Navy -->
-                                            <path d="M7 32V8h12c7 0 11 4 11 10s-4 10-11 10H14v4H7zm7-10h5c3.5 0 5.5-1.5 5.5-4.5s-2-4.5-5.5-4.5h-5v9z" fill="#002970"/>
-                                            <path d="M37 32.5c-4.5 0-7.5-3-7.5-7.5s3-7.5 7.5-7.5c2.5 0 4.5.8 5.8 1.8V8h6.5v24h-6v-2.2c-1.5 1.7-3.8 2.7-6.3 2.7zm1.2-4.8c2.8 0 4.8-2 4.8-4.8s-2-4.8-4.8-4.8-4.8 2-4.8 4.8 2 4.8 4.8 4.8z" fill="#002970"/>
-                                            <path d="M54 32l6.5-14h7l-7.2 13.5c-1.8 3.5-3.8 5.5-7.5 5.5-1.2 0-2.5-.3-3.2-.7l.8-4.3c.5.2 1.2.3 1.8.3 1.2 0 1.9-.6 2.8-2.3L54 32z" fill="#002970"/>
-                                            <!-- tm in Cyan -->
-                                            <path d="M73 32V17h-3v-4.5h3V8h5.5v4.5H84V17h-5.5v15H73z" fill="#00BAF2"/>
-                                            <path d="M86 32V12.5h5.5v2.8c1.5-2 3.8-3.2 6.5-3.2 3.2 0 5.2 1.5 6.2 3.8 1.8-2.5 4.5-3.8 7.5-3.8 4.2 0 7.3 2.8 7.3 7.8V32h-5.5V20.5c0-2.5-1.5-3.8-3.5-3.8s-3.5 1.5-3.5 4V32h-5.5V20.5c0-2.5-1.5-3.8-3.5-3.8s-3.5 1.5-3.5 4V32H86z" fill="#00BAF2"/>
-                                        </svg>
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('PAYTM', this)" style="padding: 7px 8px; gap: 7px;">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,46,110,0.25); flex-shrink: 0;">
+                                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 900; font-size: 0.78rem; letter-spacing: -0.4px; line-height: 1;">
+                                            <span style="color: #002970;">Pay</span><span style="color: #00BAF2;">tm</span>
+                                        </span>
                                     </div>
-                                    <div>
-                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">Paytm</div>
-                                        <div class="channel-info-sub">UPI & Wallet ⚡</div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Paytm</div>
+                                        <div class="channel-info-sub" style="font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">UPI & Wallet ⚡</div>
                                     </div>
                                 </div>
 
                                 <!-- BHIM UPI Official Brand Card -->
-                                <div class="payment-channel-card" onclick="selectPaymentChannel('BHIM_UPI', this)">
-                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                        <svg width="30" height="20" viewBox="0 0 60 32" fill="none">
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('BHIM_UPI', this)" style="padding: 7px 8px; gap: 7px;">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 8px; padding: 2px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); flex-shrink: 0;">
+                                        <svg width="24" height="16" viewBox="0 0 60 32" fill="none">
                                             <path d="M8 30L22 2H14L0 30h8z" fill="#00843D"/>
                                             <path d="M20 30L34 2h-8L12 30h8z" fill="#ED7D31"/>
-                                            <text x="28" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Impact, sans-serif" font-weight="900" font-style="italic" font-size="18" fill="#1D2D5B" letter-spacing="-0.5">UPI</text>
+                                            <text x="26" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Impact, sans-serif" font-weight="900" font-style="italic" font-size="16" fill="#1D2D5B" letter-spacing="-0.5">UPI</text>
                                         </svg>
                                     </div>
-                                    <div>
-                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">BHIM UPI</div>
-                                        <div class="channel-info-sub">NPCI Verified ⚡</div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">BHIM UPI</div>
+                                        <div class="channel-info-sub" style="font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">NPCI Verified ⚡</div>
                                     </div>
                                 </div>
 
                                 <!-- CRED UPI Card -->
-                                <div class="payment-channel-card" onclick="selectPaymentChannel('CRED', this)">
-                                    <div class="channel-icon-box" style="background: #121212; border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('CRED', this)" style="padding: 7px 8px; gap: 7px;">
+                                    <div class="channel-icon-box" style="background: #121212; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 2px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.4); flex-shrink: 0;">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
                                             <path d="M12 8v8"/>
                                             <path d="M8 12h8"/>
                                         </svg>
                                     </div>
-                                    <div>
-                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">CRED UPI</div>
-                                        <div class="channel-info-sub">VIP Rewards ⚡</div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CRED UPI</div>
+                                        <div class="channel-info-sub" style="font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">VIP Rewards ⚡</div>
                                     </div>
                                 </div>
 
                                 <!-- Dynamic QR Card -->
-                                <div class="payment-channel-card" onclick="selectPaymentChannel('ANY_UPI', this)">
-                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(229,24,55,0.2);">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('ANY_UPI', this)" style="padding: 7px 8px; gap: 7px;">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 8px; padding: 2px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(229,24,55,0.2); flex-shrink: 0;">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                             <path d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm14 2h2v4h-2v-4zm-2-2h4v2h-4v-2zm4 4h2v2h-2v-2z" fill="#E51837"/>
                                             <rect x="5" y="5" width="2" height="2" fill="#E51837"/>
                                             <rect x="17" y="5" width="2" height="2" fill="#E51837"/>
                                             <rect x="5" y="17" width="2" height="2" fill="#E51837"/>
                                         </svg>
                                     </div>
-                                    <div>
-                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">Dynamic QR</div>
-                                        <div class="channel-info-sub">Scan Any App ⚡</div>
+                                    <div style="min-width: 0; flex: 1; overflow: hidden;">
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dynamic QR</div>
+                                        <div class="channel-info-sub" style="font-size: 0.62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">Scan Any App ⚡</div>
                                     </div>
                                 </div>
                             </div>
@@ -1719,46 +1708,42 @@
 
                             <!-- One-Tap Specific UPI Apps Row with Authentic Logos -->
                             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px;">
-                                <button type="button" onclick="openSpecificUpiApp('phonepe')" style="background: rgba(95, 37, 159, 0.2); border: 1px solid rgba(95, 37, 159, 0.5); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                    <div style="width: 24px; height: 24px; background: #5f259f; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
-                                            <path d="M72.5 38.5c-4.2-1.8-9.8-2.7-16.7-2.7h-18v52.4h11.2V68.8h6.8c6.6 0 12-1 16.2-3.1 4.2-2.1 7.4-5.3 9.4-9.6 2-4.3 3-9.5 3-15.6 0-6.2-1-11.4-3.1-15.6-2.1-4.2-5.3-7.5-9.5-9.6l10.7-18.4c-4.2-2.3-8.8-3.5-13.8-3.5-3.1 0-6 .5-8.8 1.4L72.5 38.5zm-5.4 20.8c-1.3 2.5-3.4 4.3-6.2 5.3-2.8 1-6.5 1.5-11.1 1.5h-4.2V46.3h4.2c4.6 0 8.3.5 11.1 1.5 2.8 1 4.9 2.8 6.2 5.3 1.3 2.5 2 5.5 2 9s-.7 6.5-2 9z" fill="#FFFFFF"/>
-                                        </svg>
+                                <button type="button" onclick="openSpecificUpiApp('phonepe')" style="background: rgba(95, 37, 159, 0.2); border: 1px solid rgba(95, 37, 159, 0.5); border-radius: 8px; padding: 5px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0;">
+                                    <div style="width: 22px; height: 22px; background: #5f259f; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <span style="color: #ffffff; font-size: 11px; font-weight: 900; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1;">P</span>
                                     </div>
-                                    <span style="font-size: 10px; font-weight: 700;">PhonePe</span>
+                                    <span style="font-size: 9.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">PhonePe</span>
                                 </button>
 
-                                <button type="button" onclick="openSpecificUpiApp('gpay')" style="background: rgba(66, 133, 244, 0.15); border: 1px solid rgba(66, 133, 244, 0.4); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                    <div style="width: 24px; height: 24px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="18" height="18" viewBox="0 0 48 48">
+                                <button type="button" onclick="openSpecificUpiApp('gpay')" style="background: rgba(66, 133, 244, 0.15); border: 1px solid rgba(66, 133, 244, 0.4); border-radius: 8px; padding: 5px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0;">
+                                    <div style="width: 22px; height: 22px; background: #fff; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="15" height="15" viewBox="0 0 48 48">
                                             <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h11.9c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.8-9.8 6.8-16.5z"/>
                                             <path fill="#34A853" d="M24 46c6.2 0 11.4-2.1 15.2-5.6l-7.3-5.6c-2.1 1.4-4.7 2.2-7.9 2.2-6.1 0-11.2-4.1-13-9.6H3.4v5.8C7.2 40.8 15 46 24 46z"/>
                                             <path fill="#FBBC05" d="M11 27.4c-.5-1.4-.8-2.9-.8-4.4s.3-3 .8-4.4V12.8H3.4C1.2 17.2 0 22.2 0 27.4s1.2 10.2 3.4 14.6l7.6-5.8z"/>
                                             <path fill="#EA4335" d="M24 8.8c3.4 0 6.4 1.2 8.8 3.4l6.6-6.6C35.4 1.9 30.2 0 24 0 15 0 7.2 5.2 3.4 12.8l7.6 5.8c1.8-5.5 6.9-9.6 13-9.6z"/>
                                         </svg>
                                     </div>
-                                    <span style="font-size: 10px; font-weight: 700;">Google Pay</span>
+                                    <span style="font-size: 9.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">Google Pay</span>
                                 </button>
 
-                                <button type="button" onclick="openSpecificUpiApp('paytm')" style="background: rgba(0, 186, 242, 0.15); border: 1px solid rgba(0, 186, 242, 0.4); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                    <div style="width: 24px; height: 24px; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="22" height="12" viewBox="0 0 100 40" fill="none">
-                                            <path d="M7 32V8h12c7 0 11 4 11 10s-4 10-11 10H14v4H7zm7-10h5c3.5 0 5.5-1.5 5.5-4.5s-2-4.5-5.5-4.5h-5v9z" fill="#002970"/>
-                                            <path d="M73 32V17h-3v-4.5h3V8h5.5v4.5H84V17h-5.5v15H73z" fill="#00BAF2"/>
-                                            <path d="M86 32V12.5h5.5v2.8c1.5-2 3.8-3.2 6.5-3.2 3.2 0 5.2 1.5 6.2 3.8 1.8-2.5 4.5-3.8 7.5-3.8 4.2 0 7.3 2.8 7.3 7.8V32h-5.5V20.5c0-2.5-1.5-3.8-3.5-3.8s-3.5 1.5-3.5 4V32H86z" fill="#00BAF2"/>
-                                        </svg>
+                                <button type="button" onclick="openSpecificUpiApp('paytm')" style="background: rgba(0, 186, 242, 0.15); border: 1px solid rgba(0, 186, 242, 0.4); border-radius: 8px; padding: 5px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0;">
+                                    <div style="width: 22px; height: 22px; background: #ffffff; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 900; font-size: 7.5px; letter-spacing: -0.3px; line-height: 1;">
+                                            <span style="color: #002970;">Pay</span><span style="color: #00BAF2;">tm</span>
+                                        </span>
                                     </div>
-                                    <span style="font-size: 10px; font-weight: 700;">Paytm</span>
+                                    <span style="font-size: 9.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">Paytm</span>
                                 </button>
 
-                                <button type="button" onclick="openSpecificUpiApp('bhim')" style="background: rgba(237, 125, 49, 0.15); border: 1px solid rgba(237, 125, 49, 0.4); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                    <div style="width: 24px; height: 24px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                        <svg width="20" height="12" viewBox="0 0 60 32" fill="none">
+                                <button type="button" onclick="openSpecificUpiApp('bhim')" style="background: rgba(237, 125, 49, 0.15); border: 1px solid rgba(237, 125, 49, 0.4); border-radius: 8px; padding: 5px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0;">
+                                    <div style="width: 22px; height: 22px; background: #fff; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg width="16" height="10" viewBox="0 0 60 32" fill="none">
                                             <path d="M8 30L22 2H14L0 30h8z" fill="#00843D"/>
                                             <path d="M20 30L34 2h-8L12 30h8z" fill="#ED7D31"/>
                                         </svg>
                                     </div>
-                                    <span style="font-size: 10px; font-weight: 700;">BHIM</span>
+                                    <span style="font-size: 9.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">BHIM</span>
                                 </button>
                             </div>
                         </div>
