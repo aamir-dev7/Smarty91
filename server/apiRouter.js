@@ -691,10 +691,10 @@ apiRouter.post('/wallet/deposit-init', async (req, res) => {
         if (!authUser || !authUser.id) {
             return res.status(401).json({ success: false, message: 'Please log in to initiate a deposit.' });
         }
-        const { amount = 200, channel = 'UPI_FAST' } = req.body;
+        const { amount = 300, channel = 'UPI_FAST' } = req.body;
         const numAmount = Number(amount);
-        if (isNaN(numAmount) || numAmount < 200) {
-            return res.status(400).json({ success: false, message: 'Minimum deposit is ₹200' });
+        if (isNaN(numAmount) || numAmount < 300) {
+            return res.status(400).json({ success: false, message: 'Minimum deposit is ₹300' });
         }
         if (numAmount > 100000) {
             return res.status(400).json({ success: false, message: 'Maximum deposit is ₹1,00,000' });
@@ -713,7 +713,7 @@ apiRouter.post('/wallet/deposit-init', async (req, res) => {
             upiId,
             upiName,
             amount: numAmount,
-            bonusEligible: numAmount >= 200 ? 200.00 : 0.00,
+            bonusEligible: numAmount >= 300 ? 300.00 : 0.00,
             txRef,
             upiIntentUri,
             channel
@@ -727,8 +727,8 @@ apiRouter.post('/wallet/deposit-init', async (req, res) => {
 apiRouter.get('/wallet/config', (req, res) => {
     res.json({
         success: true,
-        upiId: serverEngine.config.upiId || '6289140468@axl',
-        upiName: serverEngine.config.upiName || 'Smarty91',
+        upiId: serverEngine.config.upiId || 'minatosenseimn3@oksbi',
+        upiName: serverEngine.config.upiName || 'Smarty91 VIP',
         upiQrImage: serverEngine.config.upiQrImage || '',
         usdtAddress: serverEngine.config.usdtAddress || '0xce0b6eecaf9Ff7Cb6c58092cD4b1C5Feb945fF8c',
         usdtQrImage: serverEngine.config.usdtQrImage || 'https://cdn.imageurlgenerator.com/uploads/cc15bb4b-e40a-403f-a63b-70b59d4e14ba.jpg',
@@ -835,7 +835,7 @@ apiRouter.post('/wallet/deposit', async (req, res) => {
             userId: authUser.id,
             amount,
             utrNumber,
-            upiId: upiId || '6289140468@axl',
+            upiId: upiId || serverEngine.config.upiId || 'minatosenseimn3@oksbi',
             channel: channel || 'UPI_MANUAL'
         });
         res.json(result);
@@ -960,10 +960,10 @@ apiRouter.post('/wallet/instamojo/create-order', async (req, res) => {
         if (!authUser || !authUser.id) {
             return res.status(401).json({ success: false, message: 'Please log in to initiate order.' });
         }
-        const { amount = 200 } = req.body;
+        const { amount = 300 } = req.body;
         const numAmount = Number(amount);
-        if (isNaN(numAmount) || numAmount < 200) {
-            return res.status(400).json({ success: false, message: 'Minimum deposit is ₹200' });
+        if (isNaN(numAmount) || numAmount < 300) {
+            return res.status(400).json({ success: false, message: 'Minimum deposit is ₹300' });
         }
 
         // If Instamojo API keys are set in environment, initiate real link
@@ -1827,7 +1827,7 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
 apiRouter.post('/developer/maintenance/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
+    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     const maint = serverEngine.config.gameMaintenance || {
@@ -1846,7 +1846,7 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
 apiRouter.post('/developer/maintenance/update', async (req, res) => {
     const { pin, secretKey, enabled, whitelistedUsers, noticeTitle, noticeMessage } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
+    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -1896,7 +1896,7 @@ apiRouter.post('/developer/maintenance/update', async (req, res) => {
 apiRouter.post('/developer/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
+    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     res.json({
@@ -1908,12 +1908,12 @@ apiRouter.post('/developer/get-config', (req, res) => {
         usdtBep20QrImage: serverEngine.config.usdtBep20QrImage || 'https://cdn.imageurlgenerator.com/uploads/cc15bb4b-e40a-403f-a63b-70b59d4e14ba.jpg',
         usdtBep20Url: serverEngine.config.usdtBep20Url || '',
         usdtRate: serverEngine.config.usdtRate || 102,
-        upiId: serverEngine.config.upiId || '6289140468@axl',
-        upiName: serverEngine.config.upiName || 'Smarty91',
+        upiId: serverEngine.config.upiId || 'minatosenseimn3@oksbi',
+        upiName: serverEngine.config.upiName || 'Smarty91 VIP',
         upiQrImage: serverEngine.config.upiQrImage || '',
-        minDeposit: serverEngine.config.minDeposit || 200,
+        minDeposit: serverEngine.config.minDeposit || 300,
         maxDeposit: serverEngine.config.maxDeposit || 100000,
-        minWithdrawal: serverEngine.config.minWithdrawal || 200,
+        minWithdrawal: serverEngine.config.minWithdrawal || 300,
         maxWithdrawal: serverEngine.config.maxWithdrawal || 100000,
         masterPin: serverEngine.masterPin || 'Smarty911',
         gameMaintenance: serverEngine.config.gameMaintenance || {
@@ -1936,7 +1936,7 @@ apiRouter.post('/developer/update-config', (req, res) => {
         masterPin, minDeposit, maxDeposit, minWithdrawal, maxWithdrawal 
     } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
+    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -1982,7 +1982,7 @@ apiRouter.post('/developer/update-config', (req, res) => {
 // --- DEVELOPER USER MANAGEMENT & CONTROL ENDPOINTS ---
 
 const validateDevKey = (key) => {
-    return key === 'Smarty911' || key === serverEngine.masterPin;
+    return key === 'Smarty911' || key === 'Smarty071' || key === serverEngine.masterPin;
 };
 
 // 1. Search User by Phone

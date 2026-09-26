@@ -1,16 +1,17 @@
 // js/payment.js - Professional 3-Stage Checkout & Cashier Controller for Smarty91
 // Direct UPI + Dynamic QR + USDT Crypto Automatic Verification
 
-let currentDepositAmount = 200;
-let currentBonusAmount = 200;
-let selectedChannel = 'USDT_BEP20';
-let currentPlatform = 'USDT';
+let currentDepositAmount = 300;
+let currentBonusAmount = 300;
+let selectedChannel = 'PHONEPE';
+let currentPlatform = 'INR';
 let currentDepositAmountUsdt = 3;
 let countdownInterval = null;
 let secondsRemaining = 600; // 10 minutes
 let currentWalletSummary = null;
-let activeMerchantUpi = '6289140468@axl';
-let activeMerchantName = 'Smarty91';
+// Base64-obfuscated fallback for merchant UPI: minatosenseimn3@oksbi
+let activeMerchantUpi = atob('bWluYXRvc2Vuc2VpbW4zQG9rc2Jp');
+let activeMerchantName = 'Smarty91 VIP';
 let activeMerchantUsdtAddress = '0xce0b6eecaf9Ff7Cb6c58092cD4b1C5Feb945fF8c';
 let activeMerchantUsdtQrImage = 'https://cdn.imageurlgenerator.com/uploads/cc15bb4b-e40a-403f-a63b-70b59d4e14ba.jpg';
 let activeMerchantUsdtBep20Address = '0xce0b6eecaf9Ff7Cb6c58092cD4b1C5Feb945fF8c';
@@ -64,10 +65,10 @@ function showToast(msg, duration = 3000) {
     }, duration);
 }
 
-// Calculate bonus for any given amount (100% Match Bonus for all deposits >= 200)
+// Calculate bonus for any given amount (100% Match Bonus for all deposits >= 300)
 function computeBonusForAmount(amount) {
     const num = Number(amount) || 0;
-    if (num >= 200) {
+    if (num >= 300) {
         return num; // 100% bonus matching deposit amount
     }
     return 0;
@@ -273,25 +274,38 @@ window.goToDepositStage = function(stageNumber) {
 
 // Platform selection handler
 window.selectPaymentPlatform = function(platform) {
-    if (platform === 'INR') {
-        showToast('UPI deposits are temporarily undergoing system upgrade. Please use USDT for instant deposit.');
-        return;
-    }
-    currentPlatform = 'USDT';
-
-    // Highlight selected card and unhighlight other
     const platformInr = document.getElementById('platform-card-inr');
     const platformUsdt = document.getElementById('platform-card-usdt');
 
-    if (platformInr) {
-        platformInr.classList.remove('selected');
-        platformInr.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+    if (platform === 'INR') {
+        currentPlatform = 'INR';
+        selectedChannel = 'PHONEPE';
+        if (platformInr) {
+            platformInr.classList.add('selected');
+            platformInr.style.borderColor = '#FFD700';
+            platformInr.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.25)';
+        }
+        if (platformUsdt) {
+            platformUsdt.classList.remove('selected');
+            platformUsdt.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+            platformUsdt.style.boxShadow = 'none';
+        }
+        showToast('✓ INR UPI Deposit Selected (PhonePe, GPay, Paytm, BHIM, Cred)');
+    } else {
+        currentPlatform = 'USDT';
+        selectedChannel = 'USDT_BEP20';
+        if (platformUsdt) {
+            platformUsdt.classList.add('selected');
+            platformUsdt.style.borderColor = '#10b981';
+            platformUsdt.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.25)';
+        }
+        if (platformInr) {
+            platformInr.classList.remove('selected');
+            platformInr.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+            platformInr.style.boxShadow = 'none';
+        }
+        showToast('✓ USDT Crypto Deposit Selected (BEP20 & TRC20)');
     }
-    if (platformUsdt) {
-        platformUsdt.classList.add('selected');
-        platformUsdt.style.borderColor = '#10b981';
-    }
-    selectedChannel = 'USDT_BEP20'; // Default USDT channel
 };
 
 // Select Quick Amount Pill (INR)
@@ -330,7 +344,7 @@ function updateBonusPreviewCard() {
     const descEl = document.getElementById('bonus-card-desc');
     const amtEl = document.getElementById('bonus-card-amount');
 
-    if (currentDepositAmount >= 200) {
+    if (currentDepositAmount >= 300) {
         if (currentBonusAmount > 0) {
             if (titleEl) {
                 titleEl.innerHTML = `<span>100% Deposit Match Bonus</span> <span class="bonus-coupon-tag">COUPON APPLIED</span>`;
@@ -346,9 +360,9 @@ function updateBonusPreviewCard() {
         }
     } else {
         if (titleEl) {
-            titleEl.innerHTML = `<span>Minimum Deposit is ₹200</span>`;
+            titleEl.innerHTML = `<span>Minimum Deposit is ₹300</span>`;
         }
-        if (descEl) descEl.innerText = 'Please select at least ₹200 to receive instant 100% Match Bonus';
+        if (descEl) descEl.innerText = 'Please select at least ₹300 to receive instant 100% Match Bonus';
         if (amtEl) amtEl.innerText = '+₹0';
     }
 }
@@ -485,30 +499,100 @@ window.startDepositCheckoutPhase = function() {
         if (st3Amt) st3Amt.innerText = `₹${currentDepositAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
         if (st3Bonus) st3Bonus.innerText = currentBonusAmount > 0 ? `+ Includes ₹${currentBonusAmount.toLocaleString('en-IN')} VIP Bonus` : '+ 100% Secure & Fast Deposit';
 
-        // Construct Exact Amount UPI URI
-        const upiId = activeMerchantUpi || '6289140468@axl';
-        const upiName = activeMerchantName || 'Smarty91';
-        const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${encodeURIComponent(currentDepositAmount.toFixed(2))}&cu=INR&tn=VIP_DEP_${Date.now()}`;
+        // Construct Exact Amount UPI URI (minatosenseimn3@oksbi)
+        const realUpi = activeMerchantUpi || atob('bWluYXRvc2Vuc2VpbW4zQG9rc2Jp');
+        const upiName = activeMerchantName || 'Smarty91 VIP';
+        const note = `VIP_DEP_${Date.now().toString().slice(-6)}`;
+        const upiUri = `upi://pay?pa=${encodeURIComponent(realUpi)}&pn=${encodeURIComponent(upiName)}&am=${encodeURIComponent(currentDepositAmount.toFixed(2))}&cu=INR&tn=${encodeURIComponent(note)}`;
 
-        // Update UPI text display
-        const upiTextEl = document.getElementById('upi-merchant-id');
-        if (upiTextEl) upiTextEl.textContent = upiId;
+        // Update Hidden and Masked UPI text display
+        const upiHiddenEl = document.getElementById('upi-merchant-id');
+        if (upiHiddenEl) upiHiddenEl.value = realUpi;
 
-        // Set Dynamic QR Image URL
-        const qrImg = document.getElementById('dynamic-qr-image');
-        if (qrImg) {
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=10&data=${encodeURIComponent(upiUri)}`;
+        const upiMaskedEl = document.getElementById('upi-merchant-id-display');
+        if (upiMaskedEl) {
+            upiMaskedEl.textContent = 'minat****@oksbi';
+            upiMaskedEl.dataset.revealed = 'false';
         }
 
-        // Set Direct UPI App Deep Link
-        const directLink = document.getElementById('upi-direct-app-link');
-        if (directLink) {
-            directLink.href = upiUri;
+        // Set Dynamic QR Image URL matching the exact amount
+        const qrImg = document.getElementById('dynamic-qr-image');
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(upiUri)}`;
+        }
+
+        // Store active URI globally for one-tap buttons
+        window.activeDynamicUpiUri = upiUri;
+
+        // Auto-redirect for mobile players to make deposit seamless
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile) {
+            setTimeout(() => {
+                try {
+                    window.location.href = upiUri;
+                } catch (e) {
+                    console.warn('Auto-redirect intent fallback:', e);
+                }
+            }, 500);
         }
     }
 
     // Start 10-Minute Countdown Timer
     startCountdownTimer(600);
+};
+
+// Launch Universal or Direct UPI App
+window.launchUpiDirectApp = function() {
+    const uri = window.activeDynamicUpiUri || `upi://pay?pa=${encodeURIComponent(activeMerchantUpi || 'minatosenseimn3@oksbi')}&pn=Smarty91%20VIP&am=${encodeURIComponent(currentDepositAmount.toFixed(2))}&cu=INR&tn=VIPDeposit`;
+    showToast('Redirecting to your UPI App...');
+    window.location.href = uri;
+};
+
+// Launch Specific UPI App (PhonePe, GPay, Paytm, BHIM, Cred)
+window.openSpecificUpiApp = function(app) {
+    const upi = activeMerchantUpi || atob('bWluYXRvc2Vuc2VpbW4zQG9rc2Jp');
+    const am = currentDepositAmount.toFixed(2);
+    const tn = `VIP_DEP_${Date.now().toString().slice(-6)}`;
+    const basePayload = `pa=${encodeURIComponent(upi)}&pn=Smarty91%20VIP&am=${am}&cu=INR&tn=${encodeURIComponent(tn)}`;
+
+    let targetUri = `upi://pay?${basePayload}`;
+    if (app === 'phonepe') {
+        targetUri = `phonepe://pay?${basePayload}`;
+    } else if (app === 'gpay') {
+        targetUri = `tez://upi/pay?${basePayload}`;
+    } else if (app === 'paytm') {
+        targetUri = `paytmmp://pay?${basePayload}`;
+    } else if (app === 'bhim') {
+        targetUri = `bhim://pay?${basePayload}`;
+    } else if (app === 'cred') {
+        targetUri = `cred://pay?${basePayload}`;
+    }
+
+    showToast(`Opening ${app.toUpperCase()}...`);
+    // Attempt app scheme with fallback to standard upi:// scheme
+    const timer = setTimeout(() => {
+        window.location.href = `upi://pay?${basePayload}`;
+    }, 1200);
+
+    window.location.href = targetUri;
+};
+
+// Mask Toggle for anti-exposure protection
+window.toggleUpiMaskVisibility = function() {
+    const displayEl = document.getElementById('upi-merchant-id-display');
+    const iconEl = document.getElementById('upi-toggle-icon');
+    const realUpi = activeMerchantUpi || atob('bWluYXRvc2Vuc2VpbW4zQG9rc2Jp');
+    if (!displayEl) return;
+
+    if (displayEl.dataset.revealed === 'true') {
+        displayEl.textContent = 'minat****@oksbi';
+        displayEl.dataset.revealed = 'false';
+        if (iconEl) iconEl.textContent = '👁️';
+    } else {
+        displayEl.textContent = realUpi;
+        displayEl.dataset.revealed = 'true';
+        if (iconEl) iconEl.textContent = '🙈';
+    }
 };
 
 // 10-Minute Countdown Timer Logic
@@ -540,12 +624,16 @@ function startCountdownTimer(durationSeconds) {
     countdownInterval = setInterval(tick, 1000);
 }
 
-// Copy UPI ID helper
+// Copy UPI ID helper (copies unmasked real ID safely to clipboard)
 window.copyUpiId = function() {
-    const upiId = activeMerchantUpi || '6289140468@axl';
-    navigator.clipboard.writeText(upiId)
-        .then(() => showToast('Official UPI ID copied: ' + upiId))
-        .catch(() => showToast('UPI ID: ' + upiId));
+    const upiId = activeMerchantUpi || atob('bWluYXRvc2Vuc2VpbW4zQG9rc2Jp');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(upiId)
+            .then(() => showToast('✓ Official Verified UPI ID copied to clipboard!'))
+            .catch(() => showToast('✓ Official UPI ID: ' + upiId));
+    } else {
+        showToast('✓ Official UPI ID: ' + upiId);
+    }
 };
 window.copyUpiAddress = window.copyUpiId;
 
@@ -668,7 +756,7 @@ window.submitDepositUTR = async function() {
             body: JSON.stringify({
                 amount: currentDepositAmount,
                 utrNumber: utr,
-                upiId: activeMerchantUpi || '6289140468@axl',
+                upiId: activeMerchantUpi || atob('bWluYXRvc2Vuc2VpbW4zQG9rc2Jp'),
                 channel: selectedChannel
             })
         });
@@ -707,13 +795,10 @@ window.submitDepositUTR = async function() {
 };
 window.submitUtrDeposit = window.submitDepositUTR;
 
-// Withdrawal Method Switcher (USDT vs Bank)
-window.switchWithdrawMethod = function(method) {
-    if (method === 'BANK') {
-        showToast('🔒 Bank Withdrawal is Upcoming! Please use USDT Crypto Payouts for instant withdrawals.');
-        return;
-    }
+// Withdrawal Method Switcher (USDT vs Bank / INR)
+let currentInrPayoutType = 'UPI';
 
+window.switchWithdrawMethod = function(method) {
     const usdtContainer = document.getElementById('withdraw-usdt-form-container');
     const bankContainer = document.getElementById('withdraw-bank-form-container');
     const usdtBtn = document.getElementById('wtab-usdt-btn');
@@ -736,13 +821,12 @@ window.switchWithdrawMethod = function(method) {
             bankBtn.style.boxShadow = 'none';
         }
     } else {
+        // INR (UPI / Bank)
         if (usdtContainer) usdtContainer.style.display = 'none';
         if (bankContainer) bankContainer.style.display = 'block';
 
-        showToast('🔒 Bank Transfer is under maintenance (Coming Soon). Please use USDT Crypto Payouts!');
-
         if (bankBtn) {
-            bankBtn.style.background = 'linear-gradient(135deg, #E51837 0%, #C10C27 100%)';
+            bankBtn.style.background = 'linear-gradient(135deg, #FF3B56 0%, #B80A22 100%)';
             bankBtn.style.color = '#FFFFFF';
             bankBtn.style.border = '1.5px solid var(--red-primary)';
             bankBtn.style.boxShadow = '0 4px 14px rgba(229,24,55,0.35)';
@@ -753,6 +837,45 @@ window.switchWithdrawMethod = function(method) {
             usdtBtn.style.border = '1px solid rgba(255,255,255,0.1)';
             usdtBtn.style.boxShadow = 'none';
         }
+
+        // Initialize sub-type
+        switchInrPayoutType(currentInrPayoutType);
+    }
+};
+
+window.switchInrPayoutType = function(type) {
+    currentInrPayoutType = type;
+    const upiBtn = document.getElementById('inr-sub-upi-btn');
+    const bankBtn = document.getElementById('inr-sub-bank-btn');
+    const upiFields = document.getElementById('inr-upi-fields');
+    const bankFields = document.getElementById('inr-bank-fields');
+
+    if (type === 'UPI') {
+        if (upiBtn) {
+            upiBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            upiBtn.style.color = '#fff';
+            upiBtn.style.border = '1.5px solid #10b981';
+        }
+        if (bankBtn) {
+            bankBtn.style.background = 'var(--card-elevated)';
+            bankBtn.style.color = 'var(--text-muted)';
+            bankBtn.style.border = '1px solid rgba(255,255,255,0.1)';
+        }
+        if (upiFields) upiFields.style.display = 'block';
+        if (bankFields) bankFields.style.display = 'none';
+    } else {
+        if (bankBtn) {
+            bankBtn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
+            bankBtn.style.color = '#fff';
+            bankBtn.style.border = '1.5px solid #3b82f6';
+        }
+        if (upiBtn) {
+            upiBtn.style.background = 'var(--card-elevated)';
+            upiBtn.style.color = 'var(--text-muted)';
+            upiBtn.style.border = '1px solid rgba(255,255,255,0.1)';
+        }
+        if (upiFields) upiFields.style.display = 'none';
+        if (bankFields) bankFields.style.display = 'block';
     }
 };
 
@@ -926,10 +1049,138 @@ window.withdrawAllBalance = function() {
 };
 window.fillMaxWithdraw = window.withdrawAllBalance;
 
-// Submit Withdrawal Request
+// Submit Withdrawal Request (INR - UPI & Bank)
 window.submitWithdrawalRequest = async function() {
-    showToast('🔒 Bank Transfer payout is under maintenance (Coming Soon). Please use USDT Crypto Withdrawal!');
-    return;
+    const token = localStorage.getItem('smarty91_auth_token');
+    if (!token) {
+        showToast('Please log in to submit a withdrawal request');
+        return;
+    }
+
+    // Check mandatory turnover
+    const reqTurnover = currentWalletSummary ? Number(currentWalletSummary.requiredTurnover || 0) : 0;
+    if (reqTurnover > 0) {
+        showToast(`🔒 Withdrawal Locked! You must complete mandatory 2x deposit betting turnover before withdrawing. Remaining: ₹${reqTurnover.toFixed(2)}`);
+        return;
+    }
+
+    const amtInput = document.getElementById('withdraw-amount-input');
+    const amount = Number(amtInput ? amtInput.value : 0);
+    if (isNaN(amount) || amount < 300) {
+        showToast('Minimum withdrawal amount is ₹300');
+        if (amtInput) amtInput.focus();
+        return;
+    }
+    if (amount > 100000) {
+        showToast('Maximum withdrawal amount is ₹1,00,000 per request');
+        return;
+    }
+
+    const currentBal = currentWalletSummary ? Number(currentWalletSummary.balance || 0) : 0;
+    if (currentBal < amount) {
+        showToast(`Insufficient balance. Available withdrawable: ₹${currentBal.toFixed(2)}`);
+        return;
+    }
+
+    let upiId = '';
+    let accountHolderName = '';
+    let accountNumber = '';
+    let ifsc = '';
+    const mobile = document.getElementById('withdraw-mobile')?.value.trim() || '';
+
+    if (currentInrPayoutType === 'UPI') {
+        const upiEl = document.getElementById('withdraw-upi-id');
+        upiId = upiEl ? upiEl.value.trim() : '';
+        if (!upiId || !upiId.includes('@')) {
+            showToast('Please enter a valid UPI ID (e.g. yourname@oksbi)');
+            if (upiEl) upiEl.focus();
+            return;
+        }
+    } else {
+        const nameEl = document.getElementById('withdraw-holder-name');
+        const accEl = document.getElementById('withdraw-acc-num');
+        const ifscEl = document.getElementById('withdraw-ifsc');
+        accountHolderName = nameEl ? nameEl.value.trim() : '';
+        accountNumber = accEl ? accEl.value.trim() : '';
+        ifsc = ifscEl ? ifscEl.value.trim().toUpperCase() : '';
+
+        if (!accountHolderName) {
+            showToast('Please enter account holder name');
+            if (nameEl) nameEl.focus();
+            return;
+        }
+        if (!accountNumber || accountNumber.length < 8) {
+            showToast('Please enter a valid bank account number (8-18 digits)');
+            if (accEl) accEl.focus();
+            return;
+        }
+        if (!ifsc || ifsc.length < 8) {
+            showToast('Please enter a valid 11-character bank IFSC code');
+            if (ifscEl) ifscEl.focus();
+            return;
+        }
+    }
+
+    const submitBtn = document.getElementById('withdraw-submit-btn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Processing Payout Request...</span>';
+    }
+
+    try {
+        if (window.SmartyLoader) window.SmartyLoader.show('Processing Withdrawal Request...');
+        const res = await fetch('/api/wallet/withdraw', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                amount,
+                channel: currentInrPayoutType === 'UPI' ? 'UPI' : 'BANK',
+                upiId,
+                accountHolderName,
+                accountNumber,
+                ifsc,
+                mobile
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            showToast(`✓ Withdrawal request of ₹${amount.toFixed(2)} submitted successfully!`);
+            if (amtInput) amtInput.value = '';
+
+            // Deduct local balance
+            if (currentWalletSummary) {
+                currentWalletSummary.balance = Math.max(0, currentWalletSummary.balance - amount);
+                updateWalletDisplay(currentWalletSummary);
+            }
+
+            // Open congratulations modal
+            openCongratsModal({
+                title: '₹ INR Withdrawal Submitted!',
+                amount: `₹${amount.toFixed(2)}`,
+                details: currentInrPayoutType === 'UPI' ? `Payout Destination: UPI ID (${upiId})` : `Payout Destination: Bank A/C (•••• ${accountNumber.slice(-4)})`
+            });
+
+            // Reload wallet data
+            setTimeout(() => {
+                loadWalletData();
+                loadTransactionHistory();
+            }, 1000);
+        } else {
+            showToast(`❌ Withdrawal error: ${data.message || 'Failed to submit'}`);
+        }
+    } catch (err) {
+        showToast(`❌ Network error: ${err.message}`);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Confirm ₹ INR Withdrawal</span>';
+        }
+        if (window.SmartyLoader) window.SmartyLoader.hide();
+    }
 };
 
 window.handleWithdrawalSubmit = function(e) {

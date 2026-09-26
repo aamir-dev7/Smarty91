@@ -71,8 +71,8 @@ class Smarty91ServerEngine {
                 '5m': { enabled: true, paused: false, pausePending: false, lockoutSeconds: 5 }
             },
             // UPI & USDT Crypto Config
-            upiId: '6289140468@axl',
-            upiName: 'Smarty91',
+            upiId: 'minatosenseimn3@oksbi',
+            upiName: 'Smarty91 VIP',
             upiQrImage: '',
             usdtAddress: '0xce0b6eecaf9Ff7Cb6c58092cD4b1C5Feb945fF8c',
             usdtQrImage: 'https://cdn.imageurlgenerator.com/uploads/cc15bb4b-e40a-403f-a63b-70b59d4e14ba.jpg',
@@ -81,9 +81,9 @@ class Smarty91ServerEngine {
             usdtBep20QrImage: 'https://cdn.imageurlgenerator.com/uploads/cc15bb4b-e40a-403f-a63b-70b59d4e14ba.jpg',
             usdtBep20Url: '',
             usdtRate: 102,
-            minDeposit: 200,
+            minDeposit: 300,
             maxDeposit: 100000,
-            minWithdrawal: 200,
+            minWithdrawal: 300,
             maxWithdrawal: 100000,
             profitStars: {
                 rank1: { first2: '98', last2: '71', amount: '₹1,84,500' },
@@ -1997,7 +1997,7 @@ class Smarty91ServerEngine {
             // Enforce minimum 1 approved deposit requirement to play games and place bets
             const hasApprovedDeposit = this.hasApprovedDeposit(user);
             if (!hasApprovedDeposit) {
-                throw new Error('🔒 Recharge Required! Minimum 1 approved deposit (₹200+) is required to play games and place bets. Please deposit funds first.');
+                throw new Error('🔒 Recharge Required! Minimum 1 approved deposit (₹300+) is required to play games and place bets. Please deposit funds first.');
             }
 
             const totalAmount = Number(unitAmount) * Number(multiplier) * Number(quantity);
@@ -2442,8 +2442,8 @@ class Smarty91ServerEngine {
 
     createDepositRequest({ userId = 'default_user', amount, utrNumber, upiId = '', channel = 'UPI_MANUAL' }) {
         const numAmount = Number(amount);
-        if (isNaN(numAmount) || numAmount < 200) {
-            throw new Error('Minimum deposit amount is ₹200');
+        if (isNaN(numAmount) || numAmount < 300) {
+            throw new Error('Minimum deposit amount is ₹300');
         }
         if (numAmount > 100000) {
             throw new Error('Maximum deposit amount is ₹1,00,000');
@@ -2463,8 +2463,8 @@ class Smarty91ServerEngine {
             bonusEligibleAmount = 250; // ₹250 Bonus (25%)
         } else if (numAmount >= 500) {
             bonusEligibleAmount = 150; // ₹150 Bonus (30%)
-        } else if (numAmount >= 200) {
-            bonusEligibleAmount = 200; // 100% Starter Double Bonus (₹200)
+        } else if (numAmount >= 300) {
+            bonusEligibleAmount = 300; // 100% Starter Double Bonus (₹300)
         }
 
         const txId = 'DEP_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
@@ -2735,8 +2735,8 @@ class Smarty91ServerEngine {
             numAmount = Number((usdtVal * rate).toFixed(2));
             usdtVal = Number(usdtVal.toFixed(2));
         } else {
-            if (isNaN(numAmount) || numAmount < 200) {
-                throw new Error('Minimum withdrawal amount is ₹200');
+            if (isNaN(numAmount) || numAmount < 300) {
+                throw new Error('Minimum withdrawal amount is ₹300');
             }
         }
 
@@ -2867,11 +2867,11 @@ class Smarty91ServerEngine {
             upiConfig: {
                 upiId: this.config.upiId || 'vip.pay@upi',
                 upiName: this.config.upiName || 'VIP SMARTY91 GAMING',
-                minDeposit: 200,
+                minDeposit: 300,
                 maxDeposit: 100000,
-                minWithdrawal: 200,
+                minWithdrawal: 300,
                 maxWithdrawal: 100000,
-                bonusOffer: 'Deposit ₹200 & Get ₹200 VIP Bonus!'
+                bonusOffer: 'Deposit ₹300 & Get ₹300 VIP Bonus!'
             }
         };
     }

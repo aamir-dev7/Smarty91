@@ -1249,36 +1249,40 @@
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- INR Card -->
-                            <div class="payment-channel-card" id="platform-card-inr" onclick="selectPaymentPlatform('INR')" style="padding: 10px; border-width: 1.5px; opacity: 0.6; border-color: rgba(255, 255, 255, 0.08);">
-                                <div class="channel-icon-box" style="background: #475569; color: #cbd5e1; font-size: 1rem; font-weight: 900; display: flex; align-items: center; justify-content: center;">
-                                    ₹
+                            <!-- INR UPI Card (Enabled & Highlighted) -->
+                            <div class="payment-channel-card selected" id="platform-card-inr" onclick="selectPaymentPlatform('INR')" style="padding: 12px; border-width: 1.5px; border-color: #FFD700; background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(229, 24, 55, 0.15) 100%); box-shadow: 0 0 15px rgba(255, 215, 0, 0.25);">
+                                <div class="channel-icon-box" style="background: #ffffff; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.3); flex-shrink: 0; padding: 4px;">
+                                    <svg width="34" height="20" viewBox="0 0 74 38" fill="none">
+                                        <!-- NPCI UPI Official Tri-color Vector -->
+                                        <path d="M12 36L30 2H20L2 36h10z" fill="#00843D"/>
+                                        <path d="M26 36L44 2h-10L16 36h10z" fill="#ED7D31"/>
+                                        <text x="36" y="29" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Impact, sans-serif" font-weight="900" font-style="italic" font-size="24" fill="#0c2340" letter-spacing="-0.5">UPI</text>
+                                    </svg>
                                 </div>
                                 <div style="flex: 1;">
-                                    <div class="channel-info-title" style="font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
-                                        <span style="color: #94a3b8;">Indian Rupee (INR)</span>
-                                        <span style="font-size: 0.58rem; font-weight: 800; background: #475569; color: #fff; padding: 1px 5px; border-radius: 3px;">UPCOMING ⏳</span>
+                                    <div class="channel-info-title" style="font-size: 0.92rem; font-weight: 900; display: flex; align-items: center; justify-content: space-between;">
+                                        <span style="color: #ffffff; letter-spacing: 0.4px;">INR UPI</span>
+                                        <span style="font-size: 0.62rem; font-weight: 900; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #fff; padding: 2px 7px; border-radius: 4px; box-shadow: 0 0 8px rgba(16,185,129,0.4);">INSTANT ⚡</span>
                                     </div>
-                                    <div class="channel-info-sub" style="font-size: 0.64rem; margin-top: 2px; color: #64748b;">Paytm • PhonePe • Google Pay • BHIM UPI</div>
-                                    <div class="channel-info-sub" style="font-size: 0.64rem; color: #94a3b8; font-weight: 700; margin-top: 1px;">Temporarily Unavailable • Please Use USDT</div>
+                                    <div class="channel-info-sub" style="font-size: 0.7rem; color: #FFD700; font-weight: 800; margin-top: 3px;">Min Deposit: ₹300 • 100% Match Bonus • 0% Fee</div>
                                 </div>
                             </div>
 
                             <!-- USDT Card -->
-                            <div class="payment-channel-card selected" id="platform-card-usdt" onclick="selectPaymentPlatform('USDT')" style="padding: 10px; border-width: 1.5px; border-color: #10b981;">
-                                <div class="channel-icon-box" style="background: #26A17B; display: flex; align-items: center; justify-content: center;">
-                                    <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                            <div class="payment-channel-card" id="platform-card-usdt" onclick="selectPaymentPlatform('USDT')" style="padding: 12px; border-width: 1.5px; border-color: rgba(255, 255, 255, 0.1);">
+                                <div class="channel-icon-box" style="background: #26A17B; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                         <circle cx="16" cy="16" r="16" fill="#26A17B"/>
                                         <path d="M17.9 14.8v-1.6h5.3V10H8.8v3.2h5.3v1.6c-4.4.2-7.7 1.1-7.7 2.2 0 1.1 3.3 2 7.7 2.2v5.1h3.8v-5.1c4.4-.2 7.7-1.1 7.7-2.2 0-1.1-3.3-2-7.7-2.2zm-1.9 3.1c-3.1 0-5.7-.6-5.7-1.3s2.6-1.3 5.7-1.3 5.7.6 5.7 1.3-2.6 1.3-5.7 1.3z" fill="#FFF"/>
                                     </svg>
                                 </div>
                                 <div style="flex: 1;">
-                                    <div class="channel-info-title" style="font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
+                                    <div class="channel-info-title" style="font-size: 0.84rem; display: flex; align-items: center; justify-content: space-between;">
                                         <span>USDT Stablecoin (Crypto)</span>
                                         <span style="font-size: 0.58rem; font-weight: 800; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 3px;">AUTOMATIC</span>
                                     </div>
-                                    <div class="channel-info-sub" style="font-size: 0.64rem; margin-top: 2px;">USDT BEP20 (BSC Smart Chain Protocol)</div>
-                                    <div class="channel-info-sub" style="font-size: 0.64rem; color: #34d399; font-weight: 700; margin-top: 1px;">Min Deposit: 3 USDT • 0% Protocol Fee</div>
+                                    <div class="channel-info-sub" style="font-size: 0.66rem; margin-top: 2px;">USDT BEP20 (BSC Smart Chain Protocol)</div>
+                                    <div class="channel-info-sub" style="font-size: 0.66rem; color: #34d399; font-weight: 700; margin-top: 1px;">Min Deposit: 3 USDT • 0% Protocol Fee</div>
                                 </div>
                             </div>
                         </div>
@@ -1301,44 +1305,101 @@
                             <div class="panel-heading" style="margin-bottom: 8px;">
                                 <span>Select Payment Option</span>
                             </div>
-                            <div class="channels-grid">
-                                <div class="payment-channel-card selected" onclick="selectPaymentChannel('BHIM_UPI', this)">
-                                    <div class="channel-icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" style="width: 100%; height: 100%; object-fit: contain;">
+                            <div class="channels-grid" style="grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                <!-- PhonePe Official Brand Card -->
+                                <div class="payment-channel-card selected" onclick="selectPaymentChannel('PHONEPE', this)">
+                                    <div class="channel-icon-box" style="background: #5f259f; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(95,37,159,0.4);">
+                                        <svg width="26" height="26" viewBox="0 0 100 100" fill="none">
+                                            <rect width="100" height="100" rx="20" fill="#5F259F"/>
+                                            <path d="M72.5 38.5c-4.2-1.8-9.8-2.7-16.7-2.7h-18v52.4h11.2V68.8h6.8c6.6 0 12-1 16.2-3.1 4.2-2.1 7.4-5.3 9.4-9.6 2-4.3 3-9.5 3-15.6 0-6.2-1-11.4-3.1-15.6-2.1-4.2-5.3-7.5-9.5-9.6l10.7-18.4c-4.2-2.3-8.8-3.5-13.8-3.5-3.1 0-6 .5-8.8 1.4L72.5 38.5zm-5.4 20.8c-1.3 2.5-3.4 4.3-6.2 5.3-2.8 1-6.5 1.5-11.1 1.5h-4.2V46.3h4.2c4.6 0 8.3.5 11.1 1.5 2.8 1 4.9 2.8 6.2 5.3 1.3 2.5 2 5.5 2 9s-.7 6.5-2 9z" fill="#FFFFFF"/>
+                                        </svg>
                                     </div>
                                     <div>
-                                        <div class="channel-info-title">Fast UPI / QR</div>
-                                        <div class="channel-info-sub">0% Fee • Instant</div>
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">PhonePe</div>
+                                        <div class="channel-info-sub">Direct App Pay ⚡</div>
                                     </div>
                                 </div>
 
-                                <div class="payment-channel-card" onclick="selectPaymentChannel('PHONEPE', this)">
-                                    <div class="channel-icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/71/PhonePe_Logo.svg" alt="PhonePe" style="width: 100%; height: 100%; object-fit: contain;">
-                                    </div>
-                                    <div>
-                                        <div class="channel-info-title">PhonePe</div>
-                                        <div class="channel-info-sub">UPI & Wallet</div>
-                                    </div>
-                                </div>
-
+                                <!-- Google Pay Official Brand Card -->
                                 <div class="payment-channel-card" onclick="selectPaymentChannel('GPAY', this)">
-                                    <div class="channel-icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                        <svg width="28" height="28" viewBox="0 0 48 48">
+                                            <!-- Official Google Pay G-Pay multi-color logo -->
+                                            <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h11.9c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.8-9.8 6.8-16.5z"/>
+                                            <path fill="#34A853" d="M24 46c6.2 0 11.4-2.1 15.2-5.6l-7.3-5.6c-2.1 1.4-4.7 2.2-7.9 2.2-6.1 0-11.2-4.1-13-9.6H3.4v5.8C7.2 40.8 15 46 24 46z"/>
+                                            <path fill="#FBBC05" d="M11 27.4c-.5-1.4-.8-2.9-.8-4.4s.3-3 .8-4.4V12.8H3.4C1.2 17.2 0 22.2 0 27.4s1.2 10.2 3.4 14.6l7.6-5.8z"/>
+                                            <path fill="#EA4335" d="M24 8.8c3.4 0 6.4 1.2 8.8 3.4l6.6-6.6C35.4 1.9 30.2 0 24 0 15 0 7.2 5.2 3.4 12.8l7.6 5.8c1.8-5.5 6.9-9.6 13-9.6z"/>
+                                        </svg>
                                     </div>
                                     <div>
-                                        <div class="channel-info-title">Google Pay</div>
-                                        <div class="channel-info-sub">UPI Direct</div>
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">Google Pay</div>
+                                        <div class="channel-info-sub">UPI Fast Flow ⚡</div>
                                     </div>
                                 </div>
 
+                                <!-- Paytm Official Brand Card -->
                                 <div class="payment-channel-card" onclick="selectPaymentChannel('PAYTM', this)">
-                                    <div class="channel-icon-box">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg" alt="Paytm" style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,46,110,0.2);">
+                                        <svg width="32" height="18" viewBox="0 0 100 40" fill="none">
+                                            <!-- Official Paytm Dual Color Wordmark -->
+                                            <!-- Pay in Navy -->
+                                            <path d="M7 32V8h12c7 0 11 4 11 10s-4 10-11 10H14v4H7zm7-10h5c3.5 0 5.5-1.5 5.5-4.5s-2-4.5-5.5-4.5h-5v9z" fill="#002970"/>
+                                            <path d="M37 32.5c-4.5 0-7.5-3-7.5-7.5s3-7.5 7.5-7.5c2.5 0 4.5.8 5.8 1.8V8h6.5v24h-6v-2.2c-1.5 1.7-3.8 2.7-6.3 2.7zm1.2-4.8c2.8 0 4.8-2 4.8-4.8s-2-4.8-4.8-4.8-4.8 2-4.8 4.8 2 4.8 4.8 4.8z" fill="#002970"/>
+                                            <path d="M54 32l6.5-14h7l-7.2 13.5c-1.8 3.5-3.8 5.5-7.5 5.5-1.2 0-2.5-.3-3.2-.7l.8-4.3c.5.2 1.2.3 1.8.3 1.2 0 1.9-.6 2.8-2.3L54 32z" fill="#002970"/>
+                                            <!-- tm in Cyan -->
+                                            <path d="M73 32V17h-3v-4.5h3V8h5.5v4.5H84V17h-5.5v15H73z" fill="#00BAF2"/>
+                                            <path d="M86 32V12.5h5.5v2.8c1.5-2 3.8-3.2 6.5-3.2 3.2 0 5.2 1.5 6.2 3.8 1.8-2.5 4.5-3.8 7.5-3.8 4.2 0 7.3 2.8 7.3 7.8V32h-5.5V20.5c0-2.5-1.5-3.8-3.5-3.8s-3.5 1.5-3.5 4V32h-5.5V20.5c0-2.5-1.5-3.8-3.5-3.8s-3.5 1.5-3.5 4V32H86z" fill="#00BAF2"/>
+                                        </svg>
                                     </div>
                                     <div>
-                                        <div class="channel-info-title">Paytm</div>
-                                        <div class="channel-info-sub">UPI & Wallet</div>
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">Paytm</div>
+                                        <div class="channel-info-sub">UPI & Wallet ⚡</div>
+                                    </div>
+                                </div>
+
+                                <!-- BHIM UPI Official Brand Card -->
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('BHIM_UPI', this)">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                        <svg width="30" height="20" viewBox="0 0 60 32" fill="none">
+                                            <path d="M8 30L22 2H14L0 30h8z" fill="#00843D"/>
+                                            <path d="M20 30L34 2h-8L12 30h8z" fill="#ED7D31"/>
+                                            <text x="28" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Impact, sans-serif" font-weight="900" font-style="italic" font-size="18" fill="#1D2D5B" letter-spacing="-0.5">UPI</text>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">BHIM UPI</div>
+                                        <div class="channel-info-sub">NPCI Verified ⚡</div>
+                                    </div>
+                                </div>
+
+                                <!-- CRED UPI Card -->
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('CRED', this)">
+                                    <div class="channel-icon-box" style="background: #121212; border: 1px solid rgba(255,255,255,0.2); border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+                                            <path d="M12 8v8"/>
+                                            <path d="M8 12h8"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">CRED UPI</div>
+                                        <div class="channel-info-sub">VIP Rewards ⚡</div>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic QR Card -->
+                                <div class="payment-channel-card" onclick="selectPaymentChannel('ANY_UPI', this)">
+                                    <div class="channel-icon-box" style="background: #ffffff; border-radius: 9px; padding: 2px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(229,24,55,0.2);">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                            <path d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm14 2h2v4h-2v-4zm-2-2h4v2h-4v-2zm4 4h2v2h-2v-2z" fill="#E51837"/>
+                                            <rect x="5" y="5" width="2" height="2" fill="#E51837"/>
+                                            <rect x="17" y="5" width="2" height="2" fill="#E51837"/>
+                                            <rect x="5" y="17" width="2" height="2" fill="#E51837"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="channel-info-title" style="font-weight: 800; color: #fff;">Dynamic QR</div>
+                                        <div class="channel-info-sub">Scan Any App ⚡</div>
                                     </div>
                                 </div>
                             </div>
@@ -1348,14 +1409,14 @@
                         <div class="glass-panel" style="padding: 10px;">
                             <div class="panel-heading" style="margin-bottom: 8px;">
                                 <span>Select Deposit Amount</span>
-                                <span style="font-size: 0.65rem; color: #FFD700; font-weight: 700; background: rgba(255,215,0,0.1); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(255,215,0,0.3);">Min ₹200</span>
+                                <span style="font-size: 0.65rem; color: #FFD700; font-weight: 700; background: rgba(255,215,0,0.1); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(255,215,0,0.3);">Min ₹300</span>
                             </div>
 
-                            <!-- Amount Quick Select Grid with 100% Match Bonus -->
+                            <!-- Amount Quick Select Grid with 100% Match Bonus starting from ₹300 -->
                             <div class="amount-selection-grid">
-                                <div class="amount-pill-card selected" onclick="selectDepositAmount(200, 200)">
+                                <div class="amount-pill-card selected" onclick="selectDepositAmount(300, 300)">
                                     <span class="pill-bonus-badge">100% BONUS</span>
-                                    <span class="pill-amount-text" style="font-size: 0.95rem;">₹200</span>
+                                    <span class="pill-amount-text" style="font-size: 0.95rem;">₹300</span>
                                 </div>
                                 <div class="amount-pill-card" onclick="selectDepositAmount(500, 500)">
                                     <span class="pill-bonus-badge">100% BONUS</span>
@@ -1382,7 +1443,7 @@
                             <!-- Custom Input -->
                             <div class="currency-input-wrapper" style="padding: 6px 10px;">
                                 <span class="currency-prefix">₹</span>
-                                <input type="number" id="custom-deposit-input" class="custom-number-input" placeholder="Or enter custom amount (Min 200)" value="200" min="200" max="100000" oninput="handleCustomDepositChange(this.value)" style="font-size: 0.9rem;">
+                                <input type="number" id="custom-deposit-input" class="custom-number-input" placeholder="Or enter custom amount (Min 300)" value="300" min="300" max="100000" oninput="handleCustomDepositChange(this.value)" style="font-size: 0.9rem;">
                             </div>
 
                             <div class="quick-chips-row">
@@ -1612,38 +1673,101 @@
                     <div id="upi-checkout-box" style="display: block;">
                         <div class="qr-display-panel">
                             <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">Amount Payable</div>
-                            <div style="font-size: 1.6rem; font-weight: 900; color: #FFD700; font-family: 'JetBrains Mono', monospace; margin: 3px 0;" id="stage-3-amount-display">
+                            <div style="font-size: 1.65rem; font-weight: 900; color: #FFD700; font-family: 'JetBrains Mono', monospace; margin: 3px 0;" id="stage-3-amount-display">
                                 ₹200.00
                             </div>
                             <div style="font-size: 0.74rem; color: #f87171; font-weight: 800;" id="stage-3-bonus-display">
                                 + Includes ₹200.00 100% Match Bonus
                             </div>
 
-                            <img id="dynamic-qr-image" src="" alt="UPI Dynamic QR" class="qr-image-frame">
-
-                            <div class="copy-pill-bar">
-                                <div style="flex: 1; overflow: hidden; padding-right: 8px; text-align: left;">
-                                    <div style="font-size: 0.64rem; color: var(--text-muted);">Merchant UPI ID</div>
-                                    <div class="copy-pill-value" id="upi-merchant-id">6289140468@axl</div>
+                            <!-- Dynamic QR Code generated specifically for this amount -->
+                            <div style="position: relative; display: inline-block; margin: 8px auto;">
+                                <img id="dynamic-qr-image" src="" alt="UPI Dynamic QR" class="qr-image-frame" style="max-width: 220px; border-radius: 12px; border: 2px solid rgba(255, 215, 0, 0.4); box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);">
+                                <div style="font-size: 0.68rem; color: #FFD700; font-weight: 800; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                    <span>⚡ Dynamic QR (Exact Amount Auto-Filled)</span>
                                 </div>
-                                <button type="button" class="btn-copy-action" onclick="copyUpiAddress()">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                    <span>Copy</span>
+                            </div>
+
+                            <!-- Masked UPI ID bar (Anti-Expose Protection) -->
+                            <div class="copy-pill-bar" style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 6px 10px;">
+                                <div style="flex: 1; overflow: hidden; padding-right: 8px; text-align: left;">
+                                    <div style="font-size: 0.62rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                                        <span>Verified Merchant UPI</span>
+                                        <span style="color: #10b981; font-size: 9px;">● Active</span>
+                                    </div>
+                                    <div class="copy-pill-value" id="upi-merchant-id-display" style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #38bdf8; font-weight: 800; letter-spacing: 0.5px;">minat****@oksbi</div>
+                                    <input type="hidden" id="upi-merchant-id" value="minatosenseimn3@oksbi">
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button type="button" class="btn-copy-action" onclick="toggleUpiMaskVisibility()" title="Show/Hide UPI ID" style="background: rgba(255,255,255,0.08); padding: 4px 7px;">
+                                        <span id="upi-toggle-icon">👁️</span>
+                                    </button>
+                                    <button type="button" class="btn-copy-action" onclick="copyUpiAddress()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                        <span>Copy</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- One-Tap Direct UPI App Payment Action -->
+                        <div style="margin-bottom: 12px;">
+                            <button type="button" id="upi-auto-pay-btn" class="btn-vip-primary" onclick="launchUpiDirectApp()" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); border-color: #34d399; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4); width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                <span id="upi-pay-btn-label">⚡ Tap to Pay via UPI App (Auto-Redirect)</span>
+                            </button>
+
+                            <!-- One-Tap Specific UPI Apps Row with Authentic Logos -->
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px;">
+                                <button type="button" onclick="openSpecificUpiApp('phonepe')" style="background: rgba(95, 37, 159, 0.2); border: 1px solid rgba(95, 37, 159, 0.5); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    <div style="width: 24px; height: 24px; background: #5f259f; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
+                                            <path d="M72.5 38.5c-4.2-1.8-9.8-2.7-16.7-2.7h-18v52.4h11.2V68.8h6.8c6.6 0 12-1 16.2-3.1 4.2-2.1 7.4-5.3 9.4-9.6 2-4.3 3-9.5 3-15.6 0-6.2-1-11.4-3.1-15.6-2.1-4.2-5.3-7.5-9.5-9.6l10.7-18.4c-4.2-2.3-8.8-3.5-13.8-3.5-3.1 0-6 .5-8.8 1.4L72.5 38.5zm-5.4 20.8c-1.3 2.5-3.4 4.3-6.2 5.3-2.8 1-6.5 1.5-11.1 1.5h-4.2V46.3h4.2c4.6 0 8.3.5 11.1 1.5 2.8 1 4.9 2.8 6.2 5.3 1.3 2.5 2 5.5 2 9s-.7 6.5-2 9z" fill="#FFFFFF"/>
+                                        </svg>
+                                    </div>
+                                    <span style="font-size: 10px; font-weight: 700;">PhonePe</span>
+                                </button>
+
+                                <button type="button" onclick="openSpecificUpiApp('gpay')" style="background: rgba(66, 133, 244, 0.15); border: 1px solid rgba(66, 133, 244, 0.4); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    <div style="width: 24px; height: 24px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <svg width="18" height="18" viewBox="0 0 48 48">
+                                            <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h11.9c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.8-9.8 6.8-16.5z"/>
+                                            <path fill="#34A853" d="M24 46c6.2 0 11.4-2.1 15.2-5.6l-7.3-5.6c-2.1 1.4-4.7 2.2-7.9 2.2-6.1 0-11.2-4.1-13-9.6H3.4v5.8C7.2 40.8 15 46 24 46z"/>
+                                            <path fill="#FBBC05" d="M11 27.4c-.5-1.4-.8-2.9-.8-4.4s.3-3 .8-4.4V12.8H3.4C1.2 17.2 0 22.2 0 27.4s1.2 10.2 3.4 14.6l7.6-5.8z"/>
+                                            <path fill="#EA4335" d="M24 8.8c3.4 0 6.4 1.2 8.8 3.4l6.6-6.6C35.4 1.9 30.2 0 24 0 15 0 7.2 5.2 3.4 12.8l7.6 5.8c1.8-5.5 6.9-9.6 13-9.6z"/>
+                                        </svg>
+                                    </div>
+                                    <span style="font-size: 10px; font-weight: 700;">Google Pay</span>
+                                </button>
+
+                                <button type="button" onclick="openSpecificUpiApp('paytm')" style="background: rgba(0, 186, 242, 0.15); border: 1px solid rgba(0, 186, 242, 0.4); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    <div style="width: 24px; height: 24px; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <svg width="22" height="12" viewBox="0 0 100 40" fill="none">
+                                            <path d="M7 32V8h12c7 0 11 4 11 10s-4 10-11 10H14v4H7zm7-10h5c3.5 0 5.5-1.5 5.5-4.5s-2-4.5-5.5-4.5h-5v9z" fill="#002970"/>
+                                            <path d="M73 32V17h-3v-4.5h3V8h5.5v4.5H84V17h-5.5v15H73z" fill="#00BAF2"/>
+                                            <path d="M86 32V12.5h5.5v2.8c1.5-2 3.8-3.2 6.5-3.2 3.2 0 5.2 1.5 6.2 3.8 1.8-2.5 4.5-3.8 7.5-3.8 4.2 0 7.3 2.8 7.3 7.8V32h-5.5V20.5c0-2.5-1.5-3.8-3.5-3.8s-3.5 1.5-3.5 4V32H86z" fill="#00BAF2"/>
+                                        </svg>
+                                    </div>
+                                    <span style="font-size: 10px; font-weight: 700;">Paytm</span>
+                                </button>
+
+                                <button type="button" onclick="openSpecificUpiApp('bhim')" style="background: rgba(237, 125, 49, 0.15); border: 1px solid rgba(237, 125, 49, 0.4); border-radius: 8px; padding: 6px 2px; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    <div style="width: 24px; height: 24px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <svg width="20" height="12" viewBox="0 0 60 32" fill="none">
+                                            <path d="M8 30L22 2H14L0 30h8z" fill="#00843D"/>
+                                            <path d="M20 30L34 2h-8L12 30h8z" fill="#ED7D31"/>
+                                        </svg>
+                                    </div>
+                                    <span style="font-size: 10px; font-weight: 700;">BHIM</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Direct App Deep Link Button for Mobile -->
-                        <a id="upi-direct-app-link" href="#" class="btn-vip-primary" style="margin-bottom: 12px; text-decoration: none;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                            <span>Open In UPI App (GPay / PhonePe)</span>
-                        </a>
-
                         <div class="instruction-box">
-                            <div style="font-weight: 800; color: #ffffff; margin-bottom: 4px;">📌 2-Step Fast Verification:</div>
+                            <div style="font-weight: 800; color: #ffffff; margin-bottom: 4px;">📌 Fast 2-Step Deposit:</div>
                             <ol>
-                                <li>Scan QR code with GPay / PhonePe / Paytm / BHIM and complete payment.</li>
-                                <li>Enter the <b>12-digit UTR / Ref Number</b> below and tap Submit.</li>
+                                <li>Tap the button above to pay directly via your UPI App OR scan the QR code.</li>
+                                <li>After payment, enter the <b>12-digit UTR / Ref Number</b> below and tap Submit.</li>
                             </ol>
                         </div>
 
@@ -1714,9 +1838,9 @@
                         <span>USDT Crypto</span>
                     </button>
 
-                    <button type="button" id="wtab-bank-btn" onclick="switchWithdrawMethod('BANK')" style="background: var(--card-elevated); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; opacity: 0.85; transition: all 0.2s;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                        <span>Bank (Coming Soon 🔒)</span>
+                    <button type="button" id="wtab-bank-btn" onclick="switchWithdrawMethod('INR')" style="background: var(--card-elevated); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; opacity: 0.95; transition: all 0.2s;">
+                        <span style="font-weight: 900; font-size: 1.05rem; color: #FFD700;">₹</span>
+                        <span>₹ INR (Bank / UPI)</span>
                     </button>
                 </div>
 
@@ -1762,51 +1886,71 @@
                     </button>
                 </div>
 
-                <!-- 2. BANK WITHDRAWAL FORM -->
-                <div id="withdraw-bank-form-container" class="glass-panel" style="display: none;">
-                    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; padding: 12px; margin-bottom: 14px; color: #f87171; font-size: 0.82rem; font-weight: 700; text-align: center; line-height: 1.4;">
-                        🔒 Bank Transfer payout channel is currently undergoing system upgrade (Coming Soon). Please use <b>USDT Crypto Withdrawal</b> for instant, zero-fee payouts directly to your wallet!
-                    </div>
-                    <div class="panel-heading">
-                        <span style="display: flex; align-items: center; gap: 6px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                            Direct Bank Transfer
+                <!-- 2. INR WITHDRAWAL FORM (UPI & BANK) -->
+                <div id="withdraw-bank-form-container" class="glass-panel" style="display: none; border-color: rgba(255, 215, 0, 0.35);">
+                    <div class="panel-heading" style="margin-bottom: 12px;">
+                        <span style="display: flex; align-items: center; gap: 6px; color: #FFD700; font-weight: 800;">
+                            <span>₹</span>
+                            <span>INR Payout (Instant UPI & Direct Bank)</span>
                         </span>
-                        <span style="font-size: 0.68rem; color: var(--text-muted);">Instant NEFT / IMPS</span>
+                        <span style="font-size: 0.68rem; color: #10b981; font-weight: 800; background: rgba(16, 185, 129, 0.15); padding: 2px 7px; border-radius: 4px;">0% Fee • Instant</span>
+                    </div>
+
+                    <!-- INR Payout Type Switcher -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+                        <button type="button" id="inr-sub-upi-btn" onclick="switchInrPayoutType('UPI')" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: 1.5px solid #10b981; border-radius: 8px; padding: 8px 6px; font-weight: 800; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <span>⚡</span>
+                            <span>UPI Payout</span>
+                        </button>
+                        <button type="button" id="inr-sub-bank-btn" onclick="switchInrPayoutType('BANK')" style="background: var(--card-elevated); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 6px; font-weight: 700; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <span>🏦</span>
+                            <span>Bank Account</span>
+                        </button>
                     </div>
 
                     <form id="withdraw-form" onsubmit="handleWithdrawalSubmit(event)">
-                        <div class="form-group-item">
-                            <label class="form-group-label">Account Holder Full Name</label>
-                            <input type="text" id="withdraw-holder-name" class="form-text-input" placeholder="Enter bank registered name">
+                        <!-- UPI Fields -->
+                        <div id="inr-upi-fields" style="display: block;">
+                            <div class="form-group-item">
+                                <label class="form-group-label">Your UPI ID (VPA) <span style="color: var(--red-primary);">*</span></label>
+                                <input type="text" id="withdraw-upi-id" class="form-text-input" placeholder="e.g. yourname@oksbi / paytm / phonepe" style="font-family: monospace; font-size: 0.9rem;">
+                            </div>
+                        </div>
+
+                        <!-- Bank Account Fields -->
+                        <div id="inr-bank-fields" style="display: none;">
+                            <div class="form-group-item">
+                                <label class="form-group-label">Account Holder Full Name <span style="color: var(--red-primary);">*</span></label>
+                                <input type="text" id="withdraw-holder-name" class="form-text-input" placeholder="Enter bank registered name">
+                            </div>
+
+                            <div class="form-group-item">
+                                <label class="form-group-label">Bank Account Number <span style="color: var(--red-primary);">*</span></label>
+                                <input type="text" id="withdraw-acc-num" class="form-text-input" placeholder="Enter 9-18 digit account number" inputmode="numeric">
+                            </div>
+
+                            <div class="form-group-item">
+                                <label class="form-group-label">Bank IFSC Code <span style="color: var(--red-primary);">*</span></label>
+                                <input type="text" id="withdraw-ifsc" class="form-text-input" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform: uppercase;">
+                            </div>
                         </div>
 
                         <div class="form-group-item">
-                            <label class="form-group-label">Bank Account Number</label>
-                            <input type="text" id="withdraw-acc-num" class="form-text-input" placeholder="Enter 9-18 digit account number" inputmode="numeric">
-                        </div>
-
-                        <div class="form-group-item">
-                            <label class="form-group-label">Bank IFSC Code</label>
-                            <input type="text" id="withdraw-ifsc" class="form-text-input" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform: uppercase;">
-                        </div>
-
-                        <div class="form-group-item">
-                            <label class="form-group-label">Registered Mobile Number</label>
+                            <label class="form-group-label">Registered Mobile Number <span style="color: var(--red-primary);">*</span></label>
                             <input type="tel" id="withdraw-mobile" class="form-text-input" placeholder="10-digit mobile number" maxlength="10">
                         </div>
 
                         <div class="form-group-item">
-                            <label class="form-group-label">Withdrawal Amount (Min ₹200)</label>
+                            <label class="form-group-label">Withdrawal Amount (Min ₹300) <span style="color: var(--red-primary);">*</span></label>
                             <div class="currency-input-wrapper">
                                 <span class="currency-prefix">₹</span>
-                                <input type="number" id="withdraw-amount-input" class="custom-number-input" placeholder="Min 200" min="200" max="50000">
-                                <button type="button" class="quick-chip-btn" onclick="fillMaxWithdraw()" style="margin-left: 6px; background: var(--red-primary); color: #fff; border: none;">MAX</button>
+                                <input type="number" id="withdraw-amount-input" class="custom-number-input" placeholder="Min 300" min="300" max="100000">
+                                <button type="button" class="quick-chip-btn" onclick="fillMaxWithdraw()" style="margin-left: 6px; background: var(--red-primary); color: #fff; border: none; font-weight: 800;">MAX</button>
                             </div>
                         </div>
 
-                        <button type="submit" id="withdraw-submit-btn" class="btn-vip-primary" style="margin-top: 10px;">
-                            <span>Confirm Bank Withdrawal</span>
+                        <button type="submit" id="withdraw-submit-btn" class="btn-vip-primary" style="margin-top: 10px; background: linear-gradient(135deg, #FF3B56 0%, #B80A22 100%);">
+                            <span>Confirm ₹ INR Withdrawal</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </button>
                     </form>

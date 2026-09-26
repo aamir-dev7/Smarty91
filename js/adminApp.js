@@ -2769,22 +2769,57 @@ function renderLogsView(container) {
 // 8. SECRET DEVELOPER PORTAL (TRIPLE-TAP TRIGGER ON AUDIT LOG)
 // -------------------------------------------------------------
 let tapTimestamps = [];
+let lastTapHandled = 0;
 let uploadedTrc20Qr = null;
 let uploadedBep20Qr = null;
 let uploadedUpiQr = null;
+let activeDevSecretKey = 'Smarty911';
 
-function handleAuditLogTap() {
+function showDevTapHint(text) {
+    const existingHint = document.getElementById('dev-portal-tap-hint');
+    if (existingHint) existingHint.remove();
+
+    const hintEl = document.createElement('div');
+    hintEl.id = 'dev-portal-tap-hint';
+    hintEl.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:12px; font-weight:800; padding:8px 18px; border-radius:24px; z-index:9999999; box-shadow:0 6px 22px rgba(0,0,0,0.6); pointer-events:none; transition:opacity 0.3s; border:1px solid rgba(255,255,255,0.25); white-space:nowrap;';
+    hintEl.textContent = text;
+    document.body.appendChild(hintEl);
+    setTimeout(() => {
+        hintEl.style.opacity = '0';
+        setTimeout(() => hintEl.remove(), 300);
+    }, 1500);
+}
+
+function handleAuditLogTap(e) {
     const now = Date.now();
+    // 250ms debounce to prevent bubbling duplicates from a single click
+    if (now - lastTapHandled < 250) {
+        return;
+    }
+    lastTapHandled = now;
+
     tapTimestamps.push(now);
+    // Keep timestamps within 3.5 seconds
+    tapTimestamps = tapTimestamps.filter(t => now - t <= 3500);
 
-    // Keep only timestamps within 1.5 seconds
-    tapTimestamps = tapTimestamps.filter(t => now - t <= 1500);
+    const count = tapTimestamps.length;
+    if (navigator.vibrate) {
+        try { navigator.vibrate( count === 3 ? [40, 60, 80] : [35] ); } catch (err) {}
+    }
 
-    if (tapTimestamps.length >= 3) {
+    if (count === 1) {
+        showDevTapHint('🔒 Audit Security: Tap 2 more times to unlock');
+    } else if (count === 2) {
+        showDevTapHint('⚡ Audit Security: Tap 1 more time to unlock portal');
+    } else if (count >= 3) {
         tapTimestamps = [];
-        openDeveloperAuthModal();
+        showDevTapHint('🔓 Unlocking Secret Developer Portal...');
+        setTimeout(() => {
+            openDeveloperAuthModal();
+        }, 150);
     }
 }
+window.handleAuditLogTap = handleAuditLogTap;
 
 // Global subtab switcher for Developer Portal
 window.switchDevPortalTab = function(tabId) {
@@ -2831,7 +2866,7 @@ async function loadGameMaintenanceDevConfig() {
         const res = await fetch('/api/developer/maintenance/get-config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ secretKey: 'Smarty071' })
+            body: JSON.stringify({ secretKey: activeDevSecretKey || 'Smarty911' })
         });
         const data = await res.json();
         if (data.success && data.maintenance) {
@@ -3075,7 +3110,7 @@ window.saveGameMaintenanceConfig = async function() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                secretKey: 'Smarty071',
+                secretKey: activeDevSecretKey || 'Smarty911',
                 enabled: !!devGameMaintConfig.enabled,
                 whitelistedUsers: devGameMaintConfig.whitelistedUsers || [],
                 noticeTitle,
@@ -3120,11 +3155,13 @@ function updateDevPreviewCards() {
 }
 
 function initDeveloperPortal() {
-    // Attach triple tap to bottom nav item "Audit Logs"
-    const logsNavItem = document.querySelector('.nav-item[data-tab="logs"]');
-    if (logsNavItem) {
-        logsNavItem.addEventListener('click', handleAuditLogTap);
-    }
+    // Global delegated listener for triple tap on any audit-log-header-trigger, nav-audit-logs-btn, or audit tab
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('.audit-log-header-trigger') || e.target.closest('#nav-audit-logs-btn') || e.target.closest('.nav-item[data-tab="logs"]');
+        if (trigger) {
+            handleAuditLogTap(e);
+        }
+    });
 
     // Modal elements
     const authModal = document.getElementById('dev-portal-auth-modal');
@@ -3167,7 +3204,7 @@ function initDeveloperPortal() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    secretKey: 'Smarty071',
+                    secretKey: activeDevSecretKey || 'Smarty911',
                     phone
                 })
             });
@@ -3257,7 +3294,7 @@ function initDeveloperPortal() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            secretKey: 'Smarty071',
+                            secretKey: activeDevSecretKey || 'Smarty911',
                             userId: user.id,
                             amount
                         })
@@ -3289,7 +3326,7 @@ function initDeveloperPortal() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            secretKey: 'Smarty071',
+                            secretKey: activeDevSecretKey || 'Smarty911',
                             userId: user.id,
                             isBlocked
                         })
@@ -3322,7 +3359,7 @@ function initDeveloperPortal() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            secretKey: 'Smarty071',
+                            secretKey: activeDevSecretKey || 'Smarty911',
                             userId: user.id
                         })
                     });
@@ -3367,7 +3404,7 @@ function initDeveloperPortal() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        secretKey: 'Smarty071'
+                        secretKey: activeDevSecretKey || 'Smarty911'
                     })
                 });
                 const d = await res.json();
@@ -3512,7 +3549,10 @@ function initDeveloperPortal() {
 
     async function verifyDevPassword() {
         const entered = passwordInput.value.trim();
-        if (entered === 'Smarty071' || entered === 'Aamir@639900' || entered === '7117' || entered === '919191') {
+        const savedSessionPin = sessionStorage.getItem('smarty91_admin_pin') || '';
+        const isValid = entered === 'Smarty911' || entered === 'Smarty071' || entered === '919191' || entered === 'Aamir@639900' || entered === '7117' || entered === savedSessionPin;
+        if (isValid) {
+            activeDevSecretKey = entered || 'Smarty911';
             authError.style.display = 'none';
             authModal.style.display = 'none';
             passwordInput.value = '';
@@ -3529,8 +3569,8 @@ function initDeveloperPortal() {
                 console.warn('Could not fetch wallet config directly', err);
             }
 
-            const activeUpi = liveConfig.upiId || '6289140468@axl';
-            const activeName = liveConfig.upiName || 'Smarty91';
+            const activeUpi = liveConfig.upiId || 'minatosenseimn3@oksbi';
+            const activeName = liveConfig.upiName || 'Smarty91 VIP';
             const activeUpiQr = liveConfig.upiQrImage || '';
 
             const activeUsdt = liveConfig.usdtAddress || '0xce0b6eecaf9Ff7Cb6c58092cD4b1C5Feb945fF8c';
@@ -3603,7 +3643,7 @@ function initDeveloperPortal() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        secretKey: 'Smarty071',
+                        secretKey: activeDevSecretKey || 'Smarty911',
                         usdtAddress,
                         usdtUrl,
                         usdtQrImage,
