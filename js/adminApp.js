@@ -1533,7 +1533,7 @@ function renderCashierView(container) {
                             <span>SEND TEST ALERT NOW</span>
                         </button>
                         
-                        <a href="https://t.me/${curBotName}?start=admin_919191" target="_blank" class="btn-secondary" style="font-size: 11.5px; padding: 9px 14px; text-decoration: none; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800;">
+                        <a href="https://t.me/${curBotName}?start=admin_9876544" target="_blank" class="btn-secondary" style="font-size: 11.5px; padding: 9px 14px; text-decoration: none; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800;">
                             <span>⚡</span>
                             <span>1-Tap Auto Connect (@${curBotName})</span>
                         </a>
@@ -1786,7 +1786,7 @@ function renderCashierView(container) {
                     • <b>Sent via Bot:</b> @${res.botUsername || 'smarty91_alert_bot'}<br/>
                     <div style="margin-top: 6px; font-size: 11px; color: #cbd5e1; font-weight: normal;">
                         👉 <b>Agar aapko notification nahi mila:</b><br/>
-                        Iska matlab aapka real Telegram Chat ID upar wale Target ID se match nahi karta! <a href="https://t.me/${res.botUsername || 'smarty91_alert_bot'}?start=admin_919191" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">Yahan click karke bot me START dabayein</a>, aapka account automatic link ho jayega.
+                        Iska matlab aapka real Telegram Chat ID upar wale Target ID se match nahi karta! <a href="https://t.me/${res.botUsername || 'smarty91_alert_bot'}?start=admin_9876544" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">Yahan click karke bot me START dabayein</a>, aapka account automatic link ho jayega.
                     </div>`;
                 }
             } catch (err) {
@@ -3550,7 +3550,7 @@ function initDeveloperPortal() {
     async function verifyDevPassword() {
         const entered = passwordInput.value.trim();
         const savedSessionPin = sessionStorage.getItem('smarty91_admin_pin') || '';
-        const isValid = entered === 'Smarty911' || entered === 'Smarty071' || entered === '919191' || entered === 'Aamir@639900' || entered === '7117' || entered === savedSessionPin;
+        const isValid = entered === 'Smarty911' || entered === 'Smarty071' || entered === '9876544' || entered === 'Aamir@639900' || entered === '7117' || entered === savedSessionPin;
         if (isValid) {
             activeDevSecretKey = entered || 'Smarty911';
             authError.style.display = 'none';

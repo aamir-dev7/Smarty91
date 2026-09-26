@@ -25,7 +25,7 @@ const checkAdminAuth = (req, res, next) => {
         req.adminRole = 'SUPER_ADMIN';
         return next();
     }
-    if (pin === '919191') {
+    if (pin === '9876544') {
         req.adminRole = 'STAFF_ADMIN';
         return next();
     }
@@ -39,7 +39,7 @@ const checkSuperAdminAuth = (req, res, next) => {
         req.adminRole = 'SUPER_ADMIN';
         return next();
     }
-    if (pin === '919191') {
+    if (pin === '9876544') {
         return res.status(403).json({
             success: false,
             message: 'Access Denied: Action restricted to Super Admin only. Staff accounts cannot execute this operation.'
@@ -1028,7 +1028,7 @@ apiRouter.post('/admin/auth/login', (req, res) => {
     }
 
     // Secondary Staff Operations Admin check
-    if (cleanPin === '919191') {
+    if (cleanPin === '9876544') {
         if (portalType === 'super') {
             return res.status(401).json({ success: false, message: 'Incorrect Master Security Password' });
         }
@@ -1355,7 +1355,7 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
     try {
         const { callback_query, message } = req.body;
 
-        // 1. Handle incoming text messages (/start, /connect 919191, etc.)
+        // 1. Handle incoming text messages (/start, /connect 9876544, etc.)
         if (message) {
             const chatId = message.chat.id;
             const text = (message.text || '').trim();
@@ -1367,7 +1367,7 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
             // Handle pairing command
             if (text.startsWith('/connect') || text.startsWith('/start admin_')) {
                 const pin = text.startsWith('/start admin_') ? text.replace('/start admin_', '').trim() : text.replace('/connect', '').trim();
-                if (pin === 'Smarty911' || pin === serverEngine.masterPin || pin === '919191') {
+                if (pin === 'Smarty911' || pin === serverEngine.masterPin || pin === '9876544') {
                     TELEGRAM_CONFIG.chatId = String(chatId);
                     saveTelegramConfig({ chatId: String(chatId) });
                     await sendDirectTelegramMessage(
@@ -1378,7 +1378,7 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
                 } else {
                     await sendDirectTelegramMessage(
                         chatId,
-                        `❌ <b>Invalid PIN!</b>\n\nAdmin connect karne ke liye correct PIN enter karein:\n<code>/connect 919191</code>`
+                        `❌ <b>Invalid PIN!</b>\n\nAdmin connect karne ke liye correct PIN enter karein:\n<code>/connect 9876544</code>`
                     );
                     return res.sendStatus(200);
                 }
@@ -1388,7 +1388,7 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
             if (text === '/start' || text.startsWith('/start')) {
                 await sendDirectTelegramMessage(
                     chatId,
-                    `👋 <b>Welcome to Smarty91 Alerts Bot!</b>\n━━━━━━━━━━━━━━━━━━━━\n🔢 <b>Your Telegram Chat ID is:</b> <code>${chatId}</code>\n👤 <b>Name:</b> ${senderName} (@${fromUser.username || 'user'})\n━━━━━━━━━━━━━━━━━━━━\n👉 <b>Abhi connect karne ke 2 aasan tareeqe:</b>\n\n1️⃣ <b>Instant Connect (1-Tap):</b>\nNiche diye command par tap karein aur send karein:\n<code>/connect 919191</code>\n\n2️⃣ <b>Ya Admin Panel me:</b>\nApna Chat ID <code>${chatId}</code> copy karein aur Admin Panel (Cashier / Outcomes) me daal kar <b>Save</b> karein!`
+                    `👋 <b>Welcome to Smarty91 Alerts Bot!</b>\n━━━━━━━━━━━━━━━━━━━━\n🔢 <b>Your Telegram Chat ID is:</b> <code>${chatId}</code>\n👤 <b>Name:</b> ${senderName} (@${fromUser.username || 'user'})\n━━━━━━━━━━━━━━━━━━━━\n👉 <b>Abhi connect karne ke 2 aasan tareeqe:</b>\n\n1️⃣ <b>Instant Connect (1-Tap):</b>\nNiche diye command par tap karein aur send karein:\n<code>/connect 9876544</code>\n\n2️⃣ <b>Ya Admin Panel me:</b>\nApna Chat ID <code>${chatId}</code> copy karein aur Admin Panel (Cashier / Outcomes) me daal kar <b>Save</b> karein!`
                 );
                 return res.sendStatus(200);
             }
