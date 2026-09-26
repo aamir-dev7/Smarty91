@@ -50,7 +50,7 @@ function isPermanentSettledReason(reason) {
 
 class Smarty91ServerEngine {
     constructor() {
-        this.masterPin = process.env.ADMIN_MASTER_PIN || 'Smarty071';
+        this.masterPin = process.env.ADMIN_MASTER_PIN || 'Smarty911';
         
         // Payout Multipliers & Settings
         this.config = {
@@ -685,7 +685,7 @@ class Smarty91ServerEngine {
         // Validation via Security PIN OR Master Admin PIN
         const providedPin = String(securityPin || masterPin || '').trim();
         const expectedPin = String(targetUser.securityPin || targetUser.phone.slice(-4));
-        const isAdminMaster = providedPin === this.masterPin || providedPin === 'Smarty071' || providedPin === 'Aamir@639900' || providedPin === '919191';
+        const isAdminMaster = providedPin === this.masterPin || providedPin === 'Smarty911';
 
         if (!isAdminMaster && providedPin !== expectedPin) {
             throw new Error('Incorrect Security PIN. If you forgot your PIN, please contact 24/7 Official Support.');
@@ -2260,6 +2260,13 @@ class Smarty91ServerEngine {
     // Admin Outcome Override
     setAdminOverride(mode, targetNumber) {
         if (!this.modes[mode]) throw new Error('Invalid game mode');
+        if (targetNumber === null || targetNumber === undefined || targetNumber === '' || targetNumber === 'auto' || targetNumber === 'null') {
+            this.adminOverrides[mode] = null;
+            firebaseSync.setAdminOverride(mode, null);
+            const msg = `Auto CSPRNG restored for ${mode}`;
+            firebaseSync.logAdminAction('ADMIN_RESTORE_AUTO_OUTCOME', msg);
+            return { mode, override: null, message: msg };
+        }
         const num = Number(targetNumber);
         if (isNaN(num) || num < 0 || num > 9) {
             this.adminOverrides[mode] = null;

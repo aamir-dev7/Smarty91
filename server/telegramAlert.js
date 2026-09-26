@@ -25,7 +25,7 @@ const saved = loadPersistedConfig();
 export const TELEGRAM_CONFIG = {
     botToken: process.env.TELEGRAM_BOT_TOKEN || saved.botToken || '8847373950:AAFn0U8ODizcxzWmrV_5eV832w5kbl6jqPE',
     chatId: process.env.TELEGRAM_CHAT_ID || saved.chatId || '8282793854',
-    adminUrl: saved.adminUrl || 'https://smarty911.onrender.com/admin.html',
+    adminUrl: saved.adminUrl || 'https://smarty911.onrender.com/smarty-secure-master-911-k8x7.html',
     botUsername: saved.botUsername || 'smarty91_alert_bot',
     botFirstName: saved.botFirstName || 'Smarty91 DEV7'
 };

@@ -336,7 +336,7 @@ function initAuthFlow() {
         submitBtn.textContent = 'VERIFYING...';
         submitBtn.disabled = true;
         try {
-            await adminService.login(pin);
+            await adminService.login(pin, 'super');
             sessionStorage.setItem('smarty91_admin_pin', pin);
             authScreen.style.display = 'none';
             startLiveSync();

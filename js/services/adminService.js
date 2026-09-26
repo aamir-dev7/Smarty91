@@ -2,9 +2,9 @@
 import { apiClient } from './apiClient.js';
 
 class AdminService {
-    async login(pin) {
+    async login(pin, portalType = 'super') {
         sessionStorage.setItem('smarty91_admin_pin', pin);
-        return await apiClient.post('/admin/auth/login', { pin });
+        return await apiClient.post('/admin/auth/login', { pin, portalType });
     }
 
     async getOverview() {

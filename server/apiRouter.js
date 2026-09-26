@@ -17,13 +17,35 @@ apiRouter.get(['/ping', '/healthz'], (req, res) => {
     });
 });
 
-// Admin Auth Middleware
+// Admin Auth Middlewares (Strict Role-Based Access Control)
 const checkAdminAuth = (req, res, next) => {
     const pin = req.headers['x-admin-pin'] || req.query.admin_pin || req.body.adminPin;
-    if (pin === serverEngine.masterPin || pin === 'Smarty071' || pin === '919191') {
+    const masterPin = serverEngine.masterPin || 'Smarty911';
+    if (pin === masterPin || pin === 'Smarty911') {
+        req.adminRole = 'SUPER_ADMIN';
         return next();
     }
-    return res.status(401).json({ success: false, message: 'Unauthorized. Invalid Admin Master PIN' });
+    if (pin === '919191') {
+        req.adminRole = 'STAFF_ADMIN';
+        return next();
+    }
+    return res.status(401).json({ success: false, message: 'Unauthorized. Invalid Admin Credentials' });
+};
+
+const checkSuperAdminAuth = (req, res, next) => {
+    const pin = req.headers['x-admin-pin'] || req.query.admin_pin || req.body.adminPin;
+    const masterPin = serverEngine.masterPin || 'Smarty911';
+    if (pin === masterPin || pin === 'Smarty911') {
+        req.adminRole = 'SUPER_ADMIN';
+        return next();
+    }
+    if (pin === '919191') {
+        return res.status(403).json({
+            success: false,
+            message: 'Access Denied: Action restricted to Super Admin only. Staff accounts cannot execute this operation.'
+        });
+    }
+    return res.status(401).json({ success: false, message: 'Unauthorized. Invalid Admin Credentials' });
 };
 
 // Helper to resolve current logged-in user or guest synchronously
@@ -94,7 +116,7 @@ apiRouter.post('/auth/login', async (req, res) => {
 });
 
 // POST /api/admin/users/reset-password -> Admin direct reset player password
-apiRouter.post('/admin/users/reset-password', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/users/reset-password', checkSuperAdminAuth, (req, res) => {
     try {
         const { userId, newPassword } = req.body;
         const result = serverEngine.adminResetUserPassword(userId, newPassword);
@@ -147,7 +169,7 @@ apiRouter.get('/game/profit-stars', (req, res) => {
 });
 
 // POST /api/admin/profit-stars -> Update Today's Profit Stars (Admin Auth)
-apiRouter.post('/admin/profit-stars', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/profit-stars', checkSuperAdminAuth, (req, res) => {
     try {
         const result = serverEngine.updateProfitStars(req.body);
         res.json(result);
@@ -167,7 +189,7 @@ apiRouter.get('/game/referral-stars', (req, res) => {
 });
 
 // POST /api/admin/referral-stars -> Update Top 3 Referral Stars (Admin Auth)
-apiRouter.post('/admin/referral-stars', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/referral-stars', checkSuperAdminAuth, (req, res) => {
     try {
         const result = serverEngine.updateReferralStars(req.body);
         res.json(result);
@@ -727,7 +749,7 @@ apiRouter.post('/admin/developer/update-upi', (req, res) => {
     try {
         const { secretKey, pin, upiId, upiName, upiQrImage, usdtAddress, usdtQrImage, usdtUrl, usdtBep20Address, usdtBep20QrImage, usdtBep20Url, usdtRate, masterPin } = req.body;
         const key = secretKey || pin;
-        if (key !== 'Smarty071' && key !== 'Aamir@639900' && key !== '7117' && key !== '919191' && key !== serverEngine.masterPin) {
+        if (key !== 'Smarty911' && key !== serverEngine.masterPin) {
             return res.status(403).json({ success: false, message: 'Access Denied: Invalid Developer Key' });
         }
 
@@ -988,11 +1010,37 @@ apiRouter.post('/wallet/instamojo/webhook', (req, res) => {
 
 // POST /api/admin/auth/login
 apiRouter.post('/admin/auth/login', (req, res) => {
-    const { pin } = req.body;
-    if (pin === serverEngine.masterPin || pin === 'Smarty071' || pin === '919191') {
-        return res.json({ success: true, message: 'Admin authenticated', token: 'ADMIN_SESSION_TOKEN_91' });
+    const { pin, portalType } = req.body;
+    const cleanPin = String(pin || '').trim();
+    const masterPin = serverEngine.masterPin || 'Smarty911';
+
+    // Master Super Admin check
+    if (cleanPin === masterPin || cleanPin === 'Smarty911') {
+        if (portalType === 'staff') {
+            return res.status(401).json({ success: false, message: 'Invalid Staff Access Password' });
+        }
+        return res.json({
+            success: true,
+            role: 'SUPER_ADMIN',
+            message: 'Master Admin authenticated successfully',
+            token: 'ADMIN_SESSION_TOKEN_91'
+        });
     }
-    return res.status(401).json({ success: false, message: 'Incorrect Admin Master PIN' });
+
+    // Secondary Staff Operations Admin check
+    if (cleanPin === '919191') {
+        if (portalType === 'super') {
+            return res.status(401).json({ success: false, message: 'Incorrect Master Security Password' });
+        }
+        return res.json({
+            success: true,
+            role: 'STAFF_ADMIN',
+            message: 'Operations Desk authenticated successfully',
+            token: 'STAFF_SESSION_TOKEN_91'
+        });
+    }
+
+    return res.status(401).json({ success: false, message: 'Incorrect Security Password' });
 });
 
 // GET /api/admin/overview
@@ -1011,8 +1059,30 @@ apiRouter.get('/admin/overview', checkAdminAuth, (req, res) => {
     const totalPendingDeposits = pendingTransactions.filter(t => t.type === 'DEPOSIT').reduce((s, t) => s + t.amount, 0);
     const totalPendingWithdrawals = pendingTransactions.filter(t => t.type === 'WITHDRAWAL').reduce((s, t) => s + t.amount, 0);
 
+    if (req.adminRole === 'STAFF_ADMIN') {
+        return res.json({
+            success: true,
+            role: 'STAFF_ADMIN',
+            overview: {
+                activeUsersCount: serverEngine.users.size,
+                totalBetsCount: allBets.length,
+                totalBetVolume: Number(totalBetVolume.toFixed(2)),
+                totalPayoutVolume: Number(totalPayoutVolume.toFixed(2)),
+                totalFeeCollected: Number(totalFeeCollected.toFixed(2)),
+                grossHouseProfit: Number((totalBetVolume - totalPayoutVolume).toFixed(2)),
+                pendingDepositsCount: pendingTransactions.filter(t => t.type === 'DEPOSIT').length,
+                pendingDepositsAmount: totalPendingDeposits,
+                pendingWithdrawalsCount: pendingTransactions.filter(t => t.type === 'WITHDRAWAL').length,
+                pendingWithdrawalsAmount: totalPendingWithdrawals
+            },
+            liveExposures,
+            recentTransactions: serverEngine.transactions.slice(0, 50)
+        });
+    }
+
     res.json({
         success: true,
+        role: 'SUPER_ADMIN',
         overview: {
             activeUsersCount: serverEngine.users.size,
             totalBetsCount: allBets.length,
@@ -1035,7 +1105,7 @@ apiRouter.get('/admin/overview', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/mode-pause -> Gracefully pause after current round or resume mode
-apiRouter.post('/admin/mode-pause', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/mode-pause', checkSuperAdminAuth, (req, res) => {
     try {
         const { mode, action = 'PAUSE_AFTER_ROUND' } = req.body;
         const result = serverEngine.setModePauseState(mode, action);
@@ -1046,7 +1116,7 @@ apiRouter.post('/admin/mode-pause', checkAdminAuth, (req, res) => {
 });
 
 // GET /api/admin/probabilities -> Get current odds/probabilities
-apiRouter.get('/admin/probabilities', checkAdminAuth, (req, res) => {
+apiRouter.get('/admin/probabilities', checkSuperAdminAuth, (req, res) => {
     res.json({
         success: true,
         probabilities: serverEngine.getProbabilities()
@@ -1054,12 +1124,12 @@ apiRouter.get('/admin/probabilities', checkAdminAuth, (req, res) => {
 });
 
 // GET /api/admin/risk-engine/status -> Get Risk Engine status & config
-apiRouter.get('/admin/risk-engine/status', checkAdminAuth, (req, res) => {
+apiRouter.get('/admin/risk-engine/status', checkSuperAdminAuth, (req, res) => {
     res.json(serverEngine.getRiskEngineStatus());
 });
 
 // POST /api/admin/risk-engine/config -> Update House Win Rate % & Strategy Presets
-apiRouter.post('/admin/risk-engine/config', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/risk-engine/config', checkSuperAdminAuth, (req, res) => {
     try {
         const result = serverEngine.updateRiskEngineConfig(req.body);
         res.json(result);
@@ -1069,7 +1139,7 @@ apiRouter.post('/admin/risk-engine/config', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/risk-engine/targeted-users -> Add/Remove Targeted User Override (Always Win / Lose)
-apiRouter.post('/admin/risk-engine/targeted-users', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/risk-engine/targeted-users', checkSuperAdminAuth, (req, res) => {
     try {
         const result = serverEngine.updateTargetedUser(req.body);
         res.json(result);
@@ -1079,7 +1149,7 @@ apiRouter.post('/admin/risk-engine/targeted-users', checkAdminAuth, (req, res) =
 });
 
 // POST /api/admin/probabilities -> Update winning chance weights
-apiRouter.post('/admin/probabilities', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/probabilities', checkSuperAdminAuth, (req, res) => {
     try {
         const result = serverEngine.updateProbabilities(req.body);
         res.json(result);
@@ -1110,7 +1180,7 @@ apiRouter.post('/admin/transactions/process', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/telegram/test -> Send Test Notification to Admin Telegram
-apiRouter.post('/admin/telegram/test', checkAdminAuth, async (req, res) => {
+apiRouter.post('/admin/telegram/test', checkSuperAdminAuth, async (req, res) => {
     try {
         const testMsg = `🔔 <b>Smarty91 Master Admin Alert Test</b>
 ━━━━━━━━━━━━━━━━━━━━
@@ -1172,7 +1242,7 @@ apiRouter.post('/admin/telegram/test', checkAdminAuth, async (req, res) => {
 });
 
 // GET /api/admin/telegram/config -> Get current bot and chat id
-apiRouter.get('/admin/telegram/config', checkAdminAuth, (req, res) => {
+apiRouter.get('/admin/telegram/config', checkSuperAdminAuth, (req, res) => {
     res.json({
         success: true,
         botToken: TELEGRAM_CONFIG.botToken || '',
@@ -1185,7 +1255,7 @@ apiRouter.get('/admin/telegram/config', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/telegram/config -> Update Bot Token or Chat ID
-apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
+apiRouter.post('/admin/telegram/config', checkSuperAdminAuth, async (req, res) => {
     try {
         const { botToken, chatId } = req.body;
         if (botToken) TELEGRAM_CONFIG.botToken = botToken.trim();
@@ -1239,7 +1309,7 @@ apiRouter.post('/admin/telegram/config', checkAdminAuth, async (req, res) => {
 });
 
 // POST /api/admin/telegram/register-webhook -> Explicit Webhook Registration
-apiRouter.post('/admin/telegram/register-webhook', checkAdminAuth, async (req, res) => {
+apiRouter.post('/admin/telegram/register-webhook', checkSuperAdminAuth, async (req, res) => {
     try {
         let publicHttpsBase = (req.secure || req.headers['x-forwarded-proto'] === 'https') ? `https://${req.get('host')}` : null;
         if (!publicHttpsBase && TELEGRAM_CONFIG.adminUrl && TELEGRAM_CONFIG.adminUrl.startsWith('https://')) {
@@ -1297,7 +1367,7 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
             // Handle pairing command
             if (text.startsWith('/connect') || text.startsWith('/start admin_')) {
                 const pin = text.startsWith('/start admin_') ? text.replace('/start admin_', '').trim() : text.replace('/connect', '').trim();
-                if (pin === '919191' || pin === serverEngine.masterPin || pin === 'Smarty071') {
+                if (pin === 'Smarty911' || pin === serverEngine.masterPin || pin === '919191') {
                     TELEGRAM_CONFIG.chatId = String(chatId);
                     saveTelegramConfig({ chatId: String(chatId) });
                     await sendDirectTelegramMessage(
@@ -1477,7 +1547,7 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
 });
 
 // GET /api/admin/telegram/bet-alerts -> Get Telegram Bet Alerts Status
-apiRouter.get('/admin/telegram/bet-alerts', checkAdminAuth, (req, res) => {
+apiRouter.get('/admin/telegram/bet-alerts', checkSuperAdminAuth, (req, res) => {
     try {
         const result = serverEngine.getTelegramBetAlertsStatus();
         res.json(result);
@@ -1487,7 +1557,7 @@ apiRouter.get('/admin/telegram/bet-alerts', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/telegram/bet-alerts -> Toggle Telegram Bet Alerts
-apiRouter.post('/admin/telegram/bet-alerts', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/telegram/bet-alerts', checkSuperAdminAuth, (req, res) => {
     try {
         const { enabled } = req.body;
         const result = serverEngine.setTelegramBetAlertsStatus(enabled);
@@ -1498,7 +1568,7 @@ apiRouter.post('/admin/telegram/bet-alerts', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/game-control -> Manual Next Outcome Override (or Reset Auto)
-apiRouter.post('/admin/game-control', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/game-control', checkSuperAdminAuth, (req, res) => {
     try {
         const { mode, targetNumber } = req.body;
         const result = serverEngine.setAdminOverride(mode, targetNumber);
@@ -1509,7 +1579,7 @@ apiRouter.post('/admin/game-control', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/mode-config -> Enable/Disable/Pause Mode
-apiRouter.post('/admin/mode-config', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/mode-config', checkSuperAdminAuth, (req, res) => {
     const { mode, enabled, paused, lockoutSeconds } = req.body;
     if (!serverEngine.config.modes[mode]) {
         return res.status(400).json({ success: false, message: 'Invalid mode' });
@@ -1530,7 +1600,7 @@ apiRouter.post('/admin/mode-config', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/payout-rules -> Update Multipliers
-apiRouter.post('/admin/payout-rules', checkAdminAuth, (req, res) => {
+apiRouter.post('/admin/payout-rules', checkSuperAdminAuth, (req, res) => {
     const { multipliers, serviceFeePercent, minBetAmount, maxBetAmount } = req.body;
 
     if (multipliers) {
@@ -1588,7 +1658,7 @@ apiRouter.get('/admin/users', checkAdminAuth, (req, res) => {
 });
 
 // POST /api/admin/users/adjust-balance -> Manual Balance Credit/Debit/Set with remarks
-apiRouter.post('/admin/users/adjust-balance', checkAdminAuth, async (req, res) => {
+apiRouter.post('/admin/users/adjust-balance', checkSuperAdminAuth, async (req, res) => {
     try {
         const { userId, amount, action = 'ADD', remarks = 'Admin manual adjustment' } = req.body;
         if (!userId) {
@@ -1681,7 +1751,7 @@ apiRouter.post('/admin/users/adjust-balance', checkAdminAuth, async (req, res) =
 });
 
 // POST /api/admin/users/adjust-turnover -> Set or Clear Required Betting Turnover
-apiRouter.post('/admin/users/adjust-turnover', checkAdminAuth, async (req, res) => {
+apiRouter.post('/admin/users/adjust-turnover', checkSuperAdminAuth, async (req, res) => {
     try {
         const { userId, turnover, remarks = 'Admin turnover adjustment' } = req.body;
         if (!userId) {
@@ -1757,7 +1827,7 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
 apiRouter.post('/developer/maintenance/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty071' && authKey !== '7117' && authKey !== 'Aamir@639900' && authKey !== serverEngine.masterPin && authKey !== '919191') {
+    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     const maint = serverEngine.config.gameMaintenance || {
@@ -1776,7 +1846,7 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
 apiRouter.post('/developer/maintenance/update', async (req, res) => {
     const { pin, secretKey, enabled, whitelistedUsers, noticeTitle, noticeMessage } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty071' && authKey !== '7117' && authKey !== 'Aamir@639900' && authKey !== serverEngine.masterPin && authKey !== '919191') {
+    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -1826,7 +1896,7 @@ apiRouter.post('/developer/maintenance/update', async (req, res) => {
 apiRouter.post('/developer/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty071' && authKey !== '7117' && authKey !== 'Aamir@639900' && authKey !== serverEngine.masterPin && authKey !== '919191') {
+    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     res.json({
@@ -1845,7 +1915,7 @@ apiRouter.post('/developer/get-config', (req, res) => {
         maxDeposit: serverEngine.config.maxDeposit || 100000,
         minWithdrawal: serverEngine.config.minWithdrawal || 200,
         maxWithdrawal: serverEngine.config.maxWithdrawal || 100000,
-        masterPin: serverEngine.masterPin || 'Smarty071',
+        masterPin: serverEngine.masterPin || 'Smarty911',
         gameMaintenance: serverEngine.config.gameMaintenance || {
             enabled: false,
             noticeTitle: 'System Upgrade in Progress',
@@ -1866,7 +1936,7 @@ apiRouter.post('/developer/update-config', (req, res) => {
         masterPin, minDeposit, maxDeposit, minWithdrawal, maxWithdrawal 
     } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty071' && authKey !== '7117' && authKey !== 'Aamir@639900' && authKey !== serverEngine.masterPin && authKey !== '919191') {
+    if (authKey !== 'Smarty911' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -1912,7 +1982,7 @@ apiRouter.post('/developer/update-config', (req, res) => {
 // --- DEVELOPER USER MANAGEMENT & CONTROL ENDPOINTS ---
 
 const validateDevKey = (key) => {
-    return key === 'Smarty071' || key === '7117' || key === 'Aamir@639900' || key === serverEngine.masterPin || key === '919191';
+    return key === 'Smarty911' || key === serverEngine.masterPin;
 };
 
 // 1. Search User by Phone
