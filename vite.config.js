@@ -12,7 +12,7 @@ function expressApiPlugin() {
             app.use('/api', apiRouter);
 
             server.middlewares.use((req, res, next) => {
-                if (req.url === '/admin' || req.url === '/admin.html') {
+                if (req.url === '/admin' || req.url === '/admin.html' || req.url === '/smarty-staff-desk-919-m4q2' || req.url === '/smarty-staff-desk-919-m4q2.html') {
                     res.statusCode = 404;
                     res.setHeader('Content-Type', 'text/html');
                     return res.end('<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p>The requested URL was not found on this server.</p></body></html>');
@@ -20,8 +20,8 @@ function expressApiPlugin() {
                 if (req.url === '/smarty-secure-master-911-k8x7') {
                     req.url = '/smarty-secure-master-911-k8x7.html';
                 }
-                if (req.url === '/smarty-staff-desk-919-m4q2') {
-                    req.url = '/smarty-staff-desk-919-m4q2.html';
+                if (req.url === '/smarty-ops-terminal-744-v9z2') {
+                    req.url = '/smarty-ops-terminal-744-v9z2.html';
                 }
                 if (req.url.startsWith('/api/') || req.url === '/api' || req.url === '/ping' || req.url === '/healthz') {
                     if (req.url === '/ping' || req.url === '/healthz') {
@@ -42,7 +42,7 @@ export default defineConfig({
             input: {
                 main: './index.html',
                 superAdmin: './smarty-secure-master-911-k8x7.html',
-                staffAdmin: './smarty-staff-desk-919-m4q2.html',
+                staffAdmin: './smarty-ops-terminal-744-v9z2.html',
                 login: './login.html',
                 profile: './profile.html',
                 payment: './payment.html',

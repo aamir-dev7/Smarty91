@@ -36,7 +36,7 @@ app.use((req, res, next) => {
 app.use('/api', apiRouter);
 
 // Explicitly block legacy or guessable admin paths
-app.all(['/admin', '/admin.html', '/administrator', '/control', '/panel'], (req, res) => {
+app.all(['/admin', '/admin.html', '/administrator', '/control', '/panel', '/smarty-staff-desk-919-m4q2', '/smarty-staff-desk-919-m4q2.html'], (req, res) => {
     res.status(404).send('<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p>The requested URL was not found on this server.</p></body></html>');
 });
 
@@ -60,7 +60,7 @@ const sendPage = (pageName, res) => {
 app.get(['/smarty-secure-master-911-k8x7', '/smarty-secure-master-911-k8x7.html'], (req, res) => sendPage('smarty-secure-master-911-k8x7.html', res));
 
 // Secret Staff Operations Panel (Unguessable URL)
-app.get(['/smarty-staff-desk-919-m4q2', '/smarty-staff-desk-919-m4q2.html'], (req, res) => sendPage('smarty-staff-desk-919-m4q2.html', res));
+app.get(['/smarty-ops-terminal-744-v9z2', '/smarty-ops-terminal-744-v9z2.html'], (req, res) => sendPage('smarty-ops-terminal-744-v9z2.html', res));
 app.get('/payment', (req, res) => sendPage('payment.html', res));
 app.get('/payment.html', (req, res) => sendPage('payment.html', res));
 app.get('/profile', (req, res) => sendPage('profile.html', res));
