@@ -3569,7 +3569,8 @@ function initDeveloperPortal() {
                 console.warn('Could not fetch wallet config directly', err);
             }
 
-            const activeUpi = liveConfig.upiId || 'minatosenseimn3@oksbi';
+            const rawLiveUpi = String(liveConfig.upiId || '').trim();
+            const activeUpi = (rawLiveUpi.includes('axl') || rawLiveUpi.includes('6289140468') || !rawLiveUpi) ? 'minatosenseimn3@oksbi' : rawLiveUpi;
             const activeName = liveConfig.upiName || 'Smarty91 VIP';
             const activeUpiQr = liveConfig.upiQrImage || '';
 

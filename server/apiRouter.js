@@ -725,9 +725,11 @@ apiRouter.post('/wallet/deposit-init', async (req, res) => {
 
 // GET /api/wallet/config -> Live Merchant UPI & USDT Config
 apiRouter.get('/wallet/config', (req, res) => {
+    const rawUpi = serverEngine.config.upiId;
+    const cleanUpi = (rawUpi && !rawUpi.includes('6289140468') && !rawUpi.includes('axl')) ? rawUpi : 'minatosenseimn3@oksbi';
     res.json({
         success: true,
-        upiId: serverEngine.config.upiId || 'minatosenseimn3@oksbi',
+        upiId: cleanUpi,
         upiName: serverEngine.config.upiName || 'Smarty91 VIP',
         upiQrImage: serverEngine.config.upiQrImage || '',
         usdtAddress: serverEngine.config.usdtAddress || '0xce0b6eecaf9Ff7Cb6c58092cD4b1C5Feb945fF8c',
@@ -737,7 +739,7 @@ apiRouter.get('/wallet/config', (req, res) => {
         usdtBep20QrImage: serverEngine.config.usdtBep20QrImage || 'https://cdn.imageurlgenerator.com/uploads/cc15bb4b-e40a-403f-a63b-70b59d4e14ba.jpg',
         usdtBep20Url: serverEngine.config.usdtBep20Url || '',
         usdtRate: serverEngine.config.usdtRate || 102,
-        minDeposit: serverEngine.config.minDeposit || 200,
+        minDeposit: serverEngine.config.minDeposit || 300,
         maxDeposit: serverEngine.config.maxDeposit || 100000,
         minWithdrawal: serverEngine.config.minWithdrawal || 500,
         maxWithdrawal: serverEngine.config.maxWithdrawal || 100000
@@ -835,7 +837,7 @@ apiRouter.post('/wallet/deposit', async (req, res) => {
             userId: authUser.id,
             amount,
             utrNumber,
-            upiId: upiId || serverEngine.config.upiId || 'minatosenseimn3@oksbi',
+            upiId: (upiId && !upiId.includes('6289140468') && !upiId.includes('axl')) ? upiId : ((serverEngine.config.upiId && !serverEngine.config.upiId.includes('axl')) ? serverEngine.config.upiId : 'minatosenseimn3@oksbi'),
             channel: channel || 'UPI_MANUAL'
         });
         res.json(result);
@@ -980,7 +982,8 @@ apiRouter.post('/wallet/instamojo/create-order', async (req, res) => {
         }
 
         // Fallback to Instant Direct UPI
-        const upiId = serverEngine.config.upiId || 'vip.pay@upi';
+        const rawUpiFallback = serverEngine.config.upiId;
+        const upiId = (rawUpiFallback && !rawUpiFallback.includes('6289140468') && !rawUpiFallback.includes('axl')) ? rawUpiFallback : 'minatosenseimn3@oksbi';
         res.json({
             success: true,
             isConfigured: false,
@@ -1947,7 +1950,10 @@ apiRouter.post('/developer/update-config', (req, res) => {
     if (usdtBep20QrImage !== undefined) serverEngine.config.usdtBep20QrImage = usdtBep20QrImage.trim();
     if (usdtBep20Url !== undefined) serverEngine.config.usdtBep20Url = usdtBep20Url.trim();
     if (usdtRate !== undefined && !isNaN(Number(usdtRate))) serverEngine.config.usdtRate = Number(usdtRate);
-    if (upiId !== undefined) serverEngine.config.upiId = upiId.trim();
+    if (upiId !== undefined) {
+        const clean = upiId.trim();
+        serverEngine.config.upiId = (clean.includes('6289140468') || clean.includes('axl') || !clean) ? 'minatosenseimn3@oksbi' : clean;
+    }
     if (upiName !== undefined) serverEngine.config.upiName = upiName.trim();
     if (upiQrImage !== undefined) serverEngine.config.upiQrImage = upiQrImage.trim();
     if (masterPin && masterPin.trim()) {

@@ -25,10 +25,14 @@ async function fetchMerchantConfig() {
         const data = await res.json();
         if (data.success) {
             if (data.upiId) {
-                activeMerchantUpi = data.upiId;
-                activeMerchantName = data.upiName || 'Smarty91';
+                const rawUpi = String(data.upiId).trim();
+                activeMerchantUpi = (rawUpi.includes('axl') || rawUpi.includes('6289140468') || !rawUpi) ? 'minatosenseimn3@oksbi' : rawUpi;
+                activeMerchantName = data.upiName || 'Smarty91 VIP';
                 const upiTextEl = document.getElementById('upi-merchant-id');
-                if (upiTextEl) upiTextEl.textContent = activeMerchantUpi;
+                if (upiTextEl) {
+                    if (upiTextEl.tagName === 'INPUT') upiTextEl.value = activeMerchantUpi;
+                    else upiTextEl.textContent = activeMerchantUpi;
+                }
             }
             if (data.usdtAddress) {
                 activeMerchantUsdtAddress = data.usdtAddress;

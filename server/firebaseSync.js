@@ -331,7 +331,17 @@ class FirebaseSyncManager {
                 if (data.serviceFeePercent !== undefined) this.engine.config.serviceFeePercent = data.serviceFeePercent;
                 if (data.minBetAmount !== undefined) this.engine.config.minBetAmount = data.minBetAmount;
                 if (data.maxBetAmount !== undefined) this.engine.config.maxBetAmount = data.maxBetAmount;
-                if (data.upiId) this.engine.config.upiId = data.upiId;
+                if (data.upiId) {
+                    const rawUpi = String(data.upiId).trim();
+                    if (rawUpi.includes('6289140468') || rawUpi.includes('axl') || !rawUpi) {
+                        this.engine.config.upiId = 'minatosenseimn3@oksbi';
+                        setDoc(configRef, { upiId: 'minatosenseimn3@oksbi' }, { merge: true }).catch(() => {});
+                    } else {
+                        this.engine.config.upiId = rawUpi;
+                    }
+                } else {
+                    this.engine.config.upiId = 'minatosenseimn3@oksbi';
+                }
                 if (data.upiName) this.engine.config.upiName = data.upiName;
                 if (data.upiQrImage !== undefined) this.engine.config.upiQrImage = data.upiQrImage;
                 if (data.usdtAddress) this.engine.config.usdtAddress = data.usdtAddress;
@@ -397,7 +407,10 @@ class FirebaseSyncManager {
                         this.engine.config.masterPin = d.masterPin;
                     }
                     if (d.modes) this.engine.config.modes = { ...this.engine.config.modes, ...d.modes };
-                    if (d.upiId) this.engine.config.upiId = d.upiId;
+                    if (d.upiId) {
+                        const rawUpi = String(d.upiId).trim();
+                        this.engine.config.upiId = (rawUpi.includes('6289140468') || rawUpi.includes('axl') || !rawUpi) ? 'minatosenseimn3@oksbi' : rawUpi;
+                    }
                     if (d.upiName) this.engine.config.upiName = d.upiName;
                     if (d.upiQrImage !== undefined) this.engine.config.upiQrImage = d.upiQrImage;
                     if (d.usdtAddress) this.engine.config.usdtAddress = d.usdtAddress;
@@ -1220,7 +1233,7 @@ class FirebaseSyncManager {
                 riskEngine: config.riskEngine,
                 probabilities: config.probabilities,
                 modes: config.modes,
-                upiId: config.upiId || 'minatosenseimn3@oksbi',
+                upiId: (config.upiId && !config.upiId.includes('6289140468') && !config.upiId.includes('axl')) ? config.upiId.trim() : 'minatosenseimn3@oksbi',
                 masterPin: config.masterPin || (this.engine ? this.engine.masterPin : 'Smarty911'),
                 upiName: config.upiName || 'Smarty91 VIP',
                 upiQrImage: config.upiQrImage || '',
