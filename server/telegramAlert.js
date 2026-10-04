@@ -23,19 +23,57 @@ function loadPersistedConfig() {
 const saved = loadPersistedConfig();
 
 export const TELEGRAM_CONFIG = {
-    botToken: process.env.TELEGRAM_BOT_TOKEN || saved.botToken || '8847373950:AAFn0U8ODizcxzWmrV_5eV832w5kbl6jqPE',
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '8763997319:AAGUf1miwijWihkTodO9-zyOdWF0mq0-GAo',
     chatId: process.env.TELEGRAM_CHAT_ID || saved.chatId || '8282793854',
+    chatIds: Array.isArray(saved.chatIds) ? saved.chatIds : (saved.chatId ? [saved.chatId] : ['8282793854']),
     adminUrl: saved.adminUrl || 'https://smarty911.onrender.com/smarty-secure-master-911-k8x7.html',
-    botUsername: saved.botUsername || 'smarty91_alert_bot',
-    botFirstName: saved.botFirstName || 'Smarty91 DEV7'
+    botUsername: 'smarty91_ops_v9bot',
+    botFirstName: 'Smarty91'
 };
 
+export function getLinkedChatIds() {
+    const list = new Set();
+    if (TELEGRAM_CONFIG.chatId) {
+        String(TELEGRAM_CONFIG.chatId).split(',').map(s => s.trim()).filter(Boolean).forEach(id => list.add(id));
+    }
+    if (Array.isArray(TELEGRAM_CONFIG.chatIds)) {
+        TELEGRAM_CONFIG.chatIds.map(s => String(s).trim()).filter(Boolean).forEach(id => list.add(id));
+    }
+    return Array.from(list);
+}
+
+export function isAuthorizedChatId(id) {
+    if (!id) return false;
+    const str = String(id).trim();
+    return getLinkedChatIds().includes(str);
+}
+
+export function addLinkedChatId(id) {
+    if (!id) return;
+    const str = String(id).trim();
+    const current = getLinkedChatIds();
+    if (!current.includes(str)) {
+        current.push(str);
+        TELEGRAM_CONFIG.chatIds = current;
+        TELEGRAM_CONFIG.chatId = current.join(', ');
+        saveTelegramConfig({ chatId: TELEGRAM_CONFIG.chatId, chatIds: current });
+        console.log(`[Telegram Config] Added linked chat ID: ${str}. Total linked: ${current.join(', ')}`);
+    }
+}
+
 export function saveTelegramConfig(updates = {}) {
-    if (updates.botToken !== undefined) TELEGRAM_CONFIG.botToken = updates.botToken.trim();
+    if (updates.botToken !== undefined && updates.botToken && !updates.botToken.includes('8847373950')) {
+        TELEGRAM_CONFIG.botToken = updates.botToken.trim();
+    } else {
+        TELEGRAM_CONFIG.botToken = '8763997319:AAGUf1miwijWihkTodO9-zyOdWF0mq0-GAo';
+    }
     if (updates.chatId !== undefined) TELEGRAM_CONFIG.chatId = updates.chatId.trim();
+    if (updates.chatIds !== undefined && Array.isArray(updates.chatIds)) {
+        TELEGRAM_CONFIG.chatIds = updates.chatIds.map(s => String(s).trim()).filter(Boolean);
+    }
     if (updates.adminUrl !== undefined) TELEGRAM_CONFIG.adminUrl = updates.adminUrl.trim();
-    if (updates.botUsername !== undefined) TELEGRAM_CONFIG.botUsername = updates.botUsername.trim();
-    if (updates.botFirstName !== undefined) TELEGRAM_CONFIG.botFirstName = updates.botFirstName.trim();
+    TELEGRAM_CONFIG.botUsername = 'smarty91_ops_v9bot';
+    TELEGRAM_CONFIG.botFirstName = 'Smarty91';
 
     try {
         const dir = path.dirname(CONFIG_FILE_PATH);
@@ -43,12 +81,13 @@ export function saveTelegramConfig(updates = {}) {
         fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify({
             botToken: TELEGRAM_CONFIG.botToken,
             chatId: TELEGRAM_CONFIG.chatId,
+            chatIds: TELEGRAM_CONFIG.chatIds,
             adminUrl: TELEGRAM_CONFIG.adminUrl,
             botUsername: TELEGRAM_CONFIG.botUsername,
             botFirstName: TELEGRAM_CONFIG.botFirstName,
             updatedAt: new Date().toISOString()
         }, null, 2), 'utf8');
-        console.log(`[Telegram Config] Persisted to ${CONFIG_FILE_PATH}: chatId=${TELEGRAM_CONFIG.chatId}`);
+        console.log(`[Telegram Config] Persisted to ${CONFIG_FILE_PATH}: chatIds=${JSON.stringify(TELEGRAM_CONFIG.chatIds)}`);
     } catch (err) {
         console.warn('[Telegram Config] Failed to write config file:', err.message);
     }
@@ -61,8 +100,8 @@ export async function refreshBotInfo() {
         const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/getMe`);
         const data = await res.json();
         if (data.ok && data.result) {
-            TELEGRAM_CONFIG.botUsername = data.result.username || TELEGRAM_CONFIG.botUsername;
-            TELEGRAM_CONFIG.botFirstName = data.result.first_name || TELEGRAM_CONFIG.botFirstName;
+            TELEGRAM_CONFIG.botUsername = data.result.username || 'smarty91_ops_v9bot';
+            TELEGRAM_CONFIG.botFirstName = data.result.first_name || 'Smarty91';
             saveTelegramConfig({});
             return data.result;
         }
@@ -97,11 +136,11 @@ export async function sendDirectTelegramMessage(targetChatId, text, replyMarkup 
 
         const resData = await response.json();
         if (!resData.ok) {
-            console.warn('[Telegram Alert Direct] API Warning:', resData.description);
+            console.warn(`[Telegram Alert Direct] API Warning for chat ${targetChatId}:`, resData.description);
         }
         return resData;
     } catch (err) {
-        console.warn('[Telegram Alert Direct] Error:', err.message);
+        console.warn(`[Telegram Alert Direct] Error for chat ${targetChatId}:`, err.message);
         return { success: false, error: err.message };
     }
 }
@@ -109,10 +148,23 @@ export async function sendDirectTelegramMessage(targetChatId, text, replyMarkup 
 export async function sendTelegramMessage(text, replyMarkup = null) {
     try {
         const token = TELEGRAM_CONFIG.botToken;
-        const chatId = TELEGRAM_CONFIG.chatId;
-        if (!token || !chatId) return { success: false, message: 'Telegram credentials missing' };
+        const allChats = getLinkedChatIds();
+        if (!token || allChats.length === 0) return { success: false, message: 'Telegram credentials or chat ID missing' };
 
-        return await sendDirectTelegramMessage(chatId, text, replyMarkup);
+        // Broadcast alert to ALL linked devices / groups so both devices receive alerts simultaneously!
+        let lastResult = null;
+        let successCount = 0;
+        for (const cid of allChats) {
+            const res = await sendDirectTelegramMessage(cid, text, replyMarkup);
+            if (res && res.ok) {
+                successCount++;
+                lastResult = res;
+            } else if (!lastResult) {
+                lastResult = res;
+            }
+        }
+
+        return lastResult || { success: successCount > 0, count: successCount };
     } catch (err) {
         console.warn('[Telegram Alert] Error sending alert:', err.message);
         return { success: false, error: err.message };

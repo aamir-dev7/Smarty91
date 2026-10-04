@@ -1,7 +1,7 @@
 import express from 'express';
 import { serverEngine, NUMBER_PROPERTIES, MODE_DISPLAY_NAMES } from './engine.js';
 import { firebaseSync } from './firebaseSync.js';
-import { sendTelegramMessage, editTelegramMessage, answerCallbackQuery, sendDirectTelegramMessage, saveTelegramConfig, refreshBotInfo, TELEGRAM_CONFIG } from './telegramAlert.js';
+import { sendTelegramMessage, editTelegramMessage, answerCallbackQuery, sendDirectTelegramMessage, saveTelegramConfig, refreshBotInfo, TELEGRAM_CONFIG, addLinkedChatId, isAuthorizedChatId, getLinkedChatIds } from './telegramAlert.js';
 
 export const apiRouter = express.Router();
 apiRouter.use(express.json());
@@ -19,7 +19,8 @@ apiRouter.get(['/ping', '/healthz'], (req, res) => {
 
 // Admin Auth Middlewares (Strict Role-Based Access Control)
 const checkAdminAuth = (req, res, next) => {
-    const pin = req.headers['x-admin-pin'] || req.query.admin_pin || req.body.adminPin;
+    const authHeader = req.headers.authorization ? req.headers.authorization.replace('Bearer ', '').trim() : '';
+    const pin = req.headers['x-admin-pin'] || authHeader || req.query.admin_pin || (req.body && req.body.adminPin);
     const masterPin = serverEngine.masterPin || 'Smarty911';
     if (pin === masterPin || pin === 'Smarty911') {
         req.adminRole = 'SUPER_ADMIN';
@@ -33,7 +34,8 @@ const checkAdminAuth = (req, res, next) => {
 };
 
 const checkSuperAdminAuth = (req, res, next) => {
-    const pin = req.headers['x-admin-pin'] || req.query.admin_pin || req.body.adminPin;
+    const authHeader = req.headers.authorization ? req.headers.authorization.replace('Bearer ', '').trim() : '';
+    const pin = req.headers['x-admin-pin'] || authHeader || req.query.admin_pin || (req.body && req.body.adminPin);
     const masterPin = serverEngine.masterPin || 'Smarty911';
     if (pin === masterPin || pin === 'Smarty911') {
         req.adminRole = 'SUPER_ADMIN';
@@ -1251,8 +1253,9 @@ apiRouter.get('/admin/telegram/config', checkSuperAdminAuth, (req, res) => {
         botToken: TELEGRAM_CONFIG.botToken || '',
         botTokenMasked: TELEGRAM_CONFIG.botToken ? `${TELEGRAM_CONFIG.botToken.slice(0, 10)}...${TELEGRAM_CONFIG.botToken.slice(-5)}` : '',
         chatId: TELEGRAM_CONFIG.chatId || '',
-        botUsername: TELEGRAM_CONFIG.botUsername || 'smarty91_alert_bot',
-        botFirstName: TELEGRAM_CONFIG.botFirstName || 'Smarty91 DEV7',
+        chatIds: getLinkedChatIds(),
+        botUsername: 'smarty91_ops_v9bot',
+        botFirstName: 'Smarty91',
         alertsEnabled: !!(serverEngine.config && serverEngine.config.telegramBetAlertsEnabled)
     });
 });
@@ -1261,12 +1264,19 @@ apiRouter.get('/admin/telegram/config', checkSuperAdminAuth, (req, res) => {
 apiRouter.post('/admin/telegram/config', checkSuperAdminAuth, async (req, res) => {
     try {
         const { botToken, chatId } = req.body;
-        if (botToken) TELEGRAM_CONFIG.botToken = botToken.trim();
-        if (chatId) TELEGRAM_CONFIG.chatId = chatId.trim();
+        if (botToken && !botToken.includes('8847373950')) TELEGRAM_CONFIG.botToken = botToken.trim();
+        if (chatId) {
+            TELEGRAM_CONFIG.chatId = chatId.trim();
+            const parsed = chatId.split(',').map(s => s.trim()).filter(Boolean);
+            if (parsed.length > 0) {
+                TELEGRAM_CONFIG.chatIds = parsed;
+            }
+        }
         
         saveTelegramConfig({
             botToken: TELEGRAM_CONFIG.botToken,
-            chatId: TELEGRAM_CONFIG.chatId
+            chatId: TELEGRAM_CONFIG.chatId,
+            chatIds: TELEGRAM_CONFIG.chatIds
         });
         await refreshBotInfo();
 
@@ -1371,11 +1381,11 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
             if (text.startsWith('/connect') || text.startsWith('/start admin_')) {
                 const pin = text.startsWith('/start admin_') ? text.replace('/start admin_', '').trim() : text.replace('/connect', '').trim();
                 if (pin === 'Smarty911' || pin === serverEngine.masterPin || pin === '9876544') {
-                    TELEGRAM_CONFIG.chatId = String(chatId);
-                    saveTelegramConfig({ chatId: String(chatId) });
+                    addLinkedChatId(String(chatId));
+                    const totalLinked = getLinkedChatIds();
                     await sendDirectTelegramMessage(
                         chatId,
-                        `🎉 <b>SMARTY91 ADMIN LINKED SUCCESSFULLY!</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Admin:</b> ${senderName}\n🆔 <b>Your Chat ID:</b> <code>${chatId}</code>\n🤖 <b>Bot:</b> @${TELEGRAM_CONFIG.botUsername}\n━━━━━━━━━━━━━━━━━━━━\n✅ <b>All Alerts Connected:</b>\n• 🎮 <b>Live Bets</b> (with 0-9 remote control buttons)\n• 📥 <b>Deposits</b> (with Approve/Reject)\n• 📤 <b>Withdrawals</b>\n\nAb jab bhi koi player bet lagayega ya deposit karega, turant yahan alert aayega!`
+                        `🎉 <b>SMARTY91 ADMIN LINKED SUCCESSFULLY!</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Admin:</b> ${senderName}\n🆔 <b>Your Chat ID:</b> <code>${chatId}</code>\n🤖 <b>Bot:</b> @${TELEGRAM_CONFIG.botUsername}\n📱 <b>Total Connected Devices:</b> ${totalLinked.length}\n━━━━━━━━━━━━━━━━━━━━\n✅ <b>All Alerts Connected:</b>\n• 🎮 <b>Live Bets</b> (with 0-9 remote control buttons)\n• 📥 <b>Deposits</b> (with Approve/Reject)\n• 📤 <b>Withdrawals</b>\n\nAb aapke is device par sabhi real-time alerts 24x7 aayenge aur dusre devices par bhi alerts active rahenge!`
                     );
                     return res.sendStatus(200);
                 } else {
@@ -1391,16 +1401,17 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
             if (text === '/start' || text.startsWith('/start')) {
                 await sendDirectTelegramMessage(
                     chatId,
-                    `👋 <b>Welcome to Smarty91 Alerts Bot!</b>\n━━━━━━━━━━━━━━━━━━━━\n🔢 <b>Your Telegram Chat ID is:</b> <code>${chatId}</code>\n👤 <b>Name:</b> ${senderName} (@${fromUser.username || 'user'})\n━━━━━━━━━━━━━━━━━━━━\n👉 <b>Abhi connect karne ke 2 aasan tareeqe:</b>\n\n1️⃣ <b>Instant Connect (1-Tap):</b>\nNiche diye command par tap karein aur send karein:\n<code>/connect 9876544</code>\n\n2️⃣ <b>Ya Admin Panel me:</b>\nApna Chat ID <code>${chatId}</code> copy karein aur Admin Panel (Cashier / Outcomes) me daal kar <b>Save</b> karein!`
+                    `👋 <b>Welcome to Smarty91 Alerts Bot!</b> (@${TELEGRAM_CONFIG.botUsername})\n━━━━━━━━━━━━━━━━━━━━\n🔢 <b>Your Telegram Chat ID is:</b> <code>${chatId}</code>\n👤 <b>Name:</b> ${senderName} (@${fromUser.username || 'user'})\n━━━━━━━━━━━━━━━━━━━━\n👉 <b>Is Device Ko Connect Karne Ke Liye:</b>\n\n1️⃣ <b>Instant Connect (1-Tap):</b>\nNiche diye command par tap karein aur send karein:\n<code>/connect 9876544</code>\n\n2️⃣ <b>Ya Admin Panel me:</b>\nApna Chat ID <code>${chatId}</code> copy karein aur Admin Panel me daal kar <b>Save</b> karein!\n\n💡 <i>Aap 2 ya usse zyada devices me bhi ye bot link kar sakte hain! Har device se bas <code>/connect 9876544</code> bhej dein.</i>`
                 );
                 return res.sendStatus(200);
             }
 
             // If added to a Channel or Group
             if (message.chat.type === 'channel' || message.chat.type === 'supergroup' || message.chat.type === 'group') {
+                addLinkedChatId(String(chatId));
                 await sendDirectTelegramMessage(
                     chatId,
-                    `📢 <b>Smarty91 Bot Connected to Channel/Group!</b>\n━━━━━━━━━━━━━━━━━━━━\n🆔 <b>Channel/Group ID:</b> <code>${chatId}</code>\n\nIs ID ko Admin Panel me Chat ID box me daalein aur Save karein!`
+                    `📢 <b>Smarty91 Bot Connected to Channel/Group!</b>\n━━━━━━━━━━━━━━━━━━━━\n🆔 <b>Channel/Group ID:</b> <code>${chatId}</code>\n\n✅ <b>Group Live Alerts Active!</b> Is group ke sabhi admins ko live bet aur deposit alerts milenge.`
                 );
                 return res.sendStatus(200);
             }
@@ -1415,15 +1426,16 @@ apiRouter.post('/telegram/webhook', async (req, res) => {
         const senderChatId = callback_query.from.id.toString();
         const callbackData = callback_query.data;
         const messageId = callback_query.message.message_id;
-        const chatId = callback_query.message.chat.id;
+        const chatId = callback_query.message.chat.id.toString();
         const originalText = callback_query.message.text || '';
 
-        // Security check: Only allow the configured admin chat ID
-        if (String(senderChatId) !== String(TELEGRAM_CONFIG.chatId) && String(chatId) !== String(TELEGRAM_CONFIG.chatId)) {
-            console.warn(`[Telegram Webhook] Unauthorized click by ${senderChatId}. Configured Admin: ${TELEGRAM_CONFIG.chatId}`);
+        // Security check: Only allow authorized admin chat IDs or groups
+        const isAuth = isAuthorizedChatId(senderChatId) || isAuthorizedChatId(chatId);
+        if (!isAuth) {
+            console.warn(`[Telegram Webhook] Unauthorized click by ${senderChatId}. Configured: ${TELEGRAM_CONFIG.chatId}`);
             await answerCallbackQuery(
                 callback_query.id, 
-                `❌ Unauthorized! Your Chat ID (${senderChatId}) does not match configured Admin Chat ID (${TELEGRAM_CONFIG.chatId}). Please update it in the Admin Panel!`
+                `❌ Unauthorized! Your Chat ID (${senderChatId}) is not linked. Type /connect 9876544 to link.`
             );
             return res.sendStatus(200);
         }
