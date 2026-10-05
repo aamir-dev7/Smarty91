@@ -1366,8 +1366,9 @@ class Smarty91ServerEngine {
             const modeConfig = this.config.modes[mode];
             if (!modeConfig || !modeConfig.enabled) return;
 
-            // If mode is currently paused
-            if (modeConfig.paused) {
+            // If global game maintenance is active OR mode is currently paused
+            const isGlobalMaintenance = Boolean(this.config.gameMaintenance && this.config.gameMaintenance.enabled);
+            if (isGlobalMaintenance || modeConfig.paused) {
                 state.isPaused = true;
                 state.isLocked = true;
                 state.remainingSeconds = 0;
@@ -1462,6 +1463,7 @@ class Smarty91ServerEngine {
         });
 
         // Pre-serialize live games status JSON once per tick for ultra-high throughput (0-CPU cost for 500+ users)
+        const isGlobalMaintenance = Boolean(this.config.gameMaintenance && this.config.gameMaintenance.enabled);
         const modesData = {};
         for (const mode of Object.keys(this.modes)) {
             const state = this.modes[mode];
@@ -1471,16 +1473,22 @@ class Smarty91ServerEngine {
                 displayName: state.displayName,
                 periodId: state.currentPeriodId,
                 endTimeMs: state.currentEndTimeMs,
-                remainingSeconds: state.remainingSeconds,
-                isLocked: state.isLocked,
-                enabled: config ? config.enabled : true,
-                paused: config ? config.paused : false,
+                remainingSeconds: isGlobalMaintenance ? 0 : state.remainingSeconds,
+                isLocked: isGlobalMaintenance ? true : state.isLocked,
+                enabled: isGlobalMaintenance ? false : (config ? config.enabled : true),
+                paused: isGlobalMaintenance ? true : (config ? config.paused : false),
                 serverTime: now
             };
         }
         this.cachedStatusJson = JSON.stringify({
             success: true,
             serverTime: now,
+            gameMaintenance: {
+                enabled: isGlobalMaintenance,
+                noticeTitle: this.config.gameMaintenance?.noticeTitle || 'System Upgrade in Progress',
+                noticeMessage: this.config.gameMaintenance?.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                whitelistedUsers: this.config.gameMaintenance?.whitelistedUsers || []
+            },
             modes: modesData
         });
     }

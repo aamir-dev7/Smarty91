@@ -21,6 +21,7 @@ import { playTickSound, stopCountdownAudio, isGameViewActive, playWinChime } fro
 import { gameService } from "./services/gameService.js";
 import { syncServerBalance } from "./wallet.js";
 import { subscribeToGamePeriod, subscribeToGameHistory } from "./services/firebaseClient.js";
+import { syncGameMaintenanceState, isGameMaintenanceActive } from "./gameMaintenance.js";
 
 let masterTimerId = null;
 let serverSyncTimerId = null;
@@ -123,12 +124,18 @@ function updateTimeDisplay(minutes, seconds) {
 export async function syncServerGameState() {
     try {
         const res = await gameService.getGameStatus();
-        if (res && res.success && res.modes) {
-            if (res.serverTime) {
-                serverClockOffset = res.serverTime - Date.now();
+        if (res && res.success) {
+            // Instant synchronization of game maintenance & pause state
+            if (res.gameMaintenance) {
+                syncGameMaintenanceState(res.gameMaintenance);
             }
 
-            const activeKey = getActiveModeKey();
+            if (res.modes) {
+                if (res.serverTime) {
+                    serverClockOffset = res.serverTime - Date.now();
+                }
+
+                const activeKey = getActiveModeKey();
 
             for (const mode of SUPPORTED_MODES) {
                 const serverMode = res.modes[mode];
@@ -192,7 +199,8 @@ export async function syncServerGameState() {
                 periodEl.textContent = activeState.currentIssueNumber;
             }
         }
-    } catch (err) {
+    }
+} catch (err) {
         console.warn('Server game state poll note:', err.message);
     }
 }
@@ -351,6 +359,14 @@ export async function initializeServerHistories() {
 // ----------------- LOCAL SMOOTH TICK LOOP -----------------
 
 function processMasterTick() {
+    // If game maintenance or pause is active for the user, freeze game countdown completely
+    if (isGameMaintenanceActive()) {
+        updateTimeDisplay(0, 0);
+        const bettingMark = document.querySelector(".Betting__C-mark");
+        if (bettingMark) bettingMark.style.display = "none";
+        return;
+    }
+
     const adjustedNow = Date.now() + serverClockOffset;
     const activeKey = getActiveModeKey();
     const bettingMark = document.querySelector(".Betting__C-mark");

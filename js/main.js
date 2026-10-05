@@ -15,6 +15,7 @@ import { initWalletModals, updateHeaderUserUI, renderBalance, syncServerBalance,
 import { initGameRecord } from './gameRecord.js';
 import { initAllEvents } from './events.js';
 import { initHomeNavigation } from './homeNavigation.js';
+import { syncGameMaintenanceState } from './gameMaintenance.js';
 
 function initViewportLock() {
     // Clean, non-blocking viewport handling
@@ -26,6 +27,19 @@ async function bootstrap() {
     initAudio();
     updateHeaderUserUI();
     
+    // Check game maintenance state on boot
+    try {
+        const token = localStorage.getItem('smarty91_auth_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const maintRes = await fetch('/api/game/maintenance-status', { headers });
+        const maintData = await maintRes.json();
+        if (maintData && maintData.success && maintData.maintenance) {
+            syncGameMaintenanceState(maintData.maintenance);
+        }
+    } catch (err) {
+        console.warn('Initial maintenance check error:', err);
+    }
+
     // Ensure real-time Firestore subscription starts with current user credentials
     setupBalanceListener();
 

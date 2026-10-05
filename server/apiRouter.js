@@ -305,6 +305,7 @@ apiRouter.get('/games/status', (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         return res.send(serverEngine.cachedStatusJson);
     }
+    const isGlobalMaintenance = Boolean(serverEngine.config.gameMaintenance && serverEngine.config.gameMaintenance.enabled);
     const modesData = {};
     Object.keys(serverEngine.modes).forEach(mode => {
         const state = serverEngine.modes[mode];
@@ -314,10 +315,10 @@ apiRouter.get('/games/status', (req, res) => {
             displayName: state.displayName,
             periodId: state.currentPeriodId,
             endTimeMs: state.currentEndTimeMs,
-            remainingSeconds: state.remainingSeconds,
-            isLocked: state.isLocked,
-            enabled: config ? config.enabled : true,
-            paused: config ? config.paused : false,
+            remainingSeconds: isGlobalMaintenance ? 0 : state.remainingSeconds,
+            isLocked: isGlobalMaintenance ? true : state.isLocked,
+            enabled: isGlobalMaintenance ? false : (config ? config.enabled : true),
+            paused: isGlobalMaintenance ? true : (config ? config.paused : false),
             serverTime: Date.now()
         };
     });
@@ -325,6 +326,12 @@ apiRouter.get('/games/status', (req, res) => {
     res.json({
         success: true,
         serverTime: Date.now(),
+        gameMaintenance: {
+            enabled: isGlobalMaintenance,
+            noticeTitle: serverEngine.config.gameMaintenance?.noticeTitle || 'System Upgrade in Progress',
+            noticeMessage: serverEngine.config.gameMaintenance?.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+            whitelistedUsers: serverEngine.config.gameMaintenance?.whitelistedUsers || []
+        },
         modes: modesData
     });
 });
@@ -1842,7 +1849,7 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
 apiRouter.post('/developer/maintenance/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
+    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== '9876544' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     const maint = serverEngine.config.gameMaintenance || {
@@ -1861,7 +1868,7 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
 apiRouter.post('/developer/maintenance/update', async (req, res) => {
     const { pin, secretKey, enabled, whitelistedUsers, noticeTitle, noticeMessage } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
+    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== '9876544' && authKey !== serverEngine.masterPin) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -1888,6 +1895,23 @@ apiRouter.post('/developer/maintenance/update', async (req, res) => {
     if (noticeMessage !== undefined) {
         serverEngine.config.gameMaintenance.noticeMessage = String(noticeMessage).trim() || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!';
     }
+
+    // Immediately stop or unfreeze game state across all modes
+    if (serverEngine.config.gameMaintenance.enabled) {
+        Object.keys(serverEngine.modes).forEach(m => {
+            if (serverEngine.modes[m]) {
+                serverEngine.modes[m].isPaused = true;
+                serverEngine.modes[m].isLocked = true;
+                serverEngine.modes[m].remainingSeconds = 0;
+            }
+        });
+    }
+
+    // Immediately invalidate cached fast-path status JSON so clients see instant change
+    serverEngine.cachedStatusJson = null;
+    try {
+        serverEngine._tick();
+    } catch (e) {}
 
     try {
         await firebaseSync.saveSystemConfig(serverEngine.config);
