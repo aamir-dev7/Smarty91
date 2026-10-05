@@ -2757,12 +2757,6 @@ function renderLogsView(container) {
             </div>
         </div>
     `;
-
-    // Also attach tap listener to the card header
-    const headerTrigger = container.querySelector('.audit-log-header-trigger');
-    if (headerTrigger) {
-        headerTrigger.addEventListener('click', handleAuditLogTap);
-    }
 }
 
 // -------------------------------------------------------------
@@ -2775,48 +2769,32 @@ let uploadedBep20Qr = null;
 let uploadedUpiQr = null;
 let activeDevSecretKey = 'Smarty911';
 
-function showDevTapHint(text) {
-    const existingHint = document.getElementById('dev-portal-tap-hint');
-    if (existingHint) existingHint.remove();
-
-    const hintEl = document.createElement('div');
-    hintEl.id = 'dev-portal-tap-hint';
-    hintEl.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:12px; font-weight:800; padding:8px 18px; border-radius:24px; z-index:9999999; box-shadow:0 6px 22px rgba(0,0,0,0.6); pointer-events:none; transition:opacity 0.3s; border:1px solid rgba(255,255,255,0.25); white-space:nowrap;';
-    hintEl.textContent = text;
-    document.body.appendChild(hintEl);
-    setTimeout(() => {
-        hintEl.style.opacity = '0';
-        setTimeout(() => hintEl.remove(), 300);
-    }, 1500);
+function getActiveDevKey() {
+    return activeDevSecretKey || sessionStorage.getItem('smarty91_admin_pin') || 'Smarty911';
 }
 
+// Triple-tap handler: 100% silent. No toasts, no hints, zero exposure to regular users.
 function handleAuditLogTap(e) {
     const now = Date.now();
-    // 250ms debounce to prevent bubbling duplicates from a single click
-    if (now - lastTapHandled < 250) {
+    // 200ms debounce to prevent bubbling duplicates from a single click
+    if (now - lastTapHandled < 200) {
         return;
     }
     lastTapHandled = now;
 
     tapTimestamps.push(now);
-    // Keep timestamps within 3.5 seconds
-    tapTimestamps = tapTimestamps.filter(t => now - t <= 3500);
+    // Keep timestamps within 2.5 seconds for rapid triple-tap
+    tapTimestamps = tapTimestamps.filter(t => now - t <= 2500);
 
     const count = tapTimestamps.length;
-    if (navigator.vibrate) {
-        try { navigator.vibrate( count === 3 ? [40, 60, 80] : [35] ); } catch (err) {}
-    }
 
-    if (count === 1) {
-        showDevTapHint('🔒 Audit Security: Tap 2 more times to unlock');
-    } else if (count === 2) {
-        showDevTapHint('⚡ Audit Security: Tap 1 more time to unlock portal');
-    } else if (count >= 3) {
+    // Completely silent on tap 1 and tap 2 - NO hints or popups exposed!
+    if (count >= 3) {
         tapTimestamps = [];
-        showDevTapHint('🔓 Unlocking Secret Developer Portal...');
-        setTimeout(() => {
-            openDeveloperAuthModal();
-        }, 150);
+        if (navigator.vibrate) {
+            try { navigator.vibrate([40, 60, 80]); } catch (err) {}
+        }
+        openDeveloperAuthModal();
     }
 }
 window.handleAuditLogTap = handleAuditLogTap;
@@ -2866,7 +2844,7 @@ async function loadGameMaintenanceDevConfig() {
         const res = await fetch('/api/developer/maintenance/get-config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ secretKey: activeDevSecretKey || 'Smarty911' })
+            body: JSON.stringify({ secretKey: getActiveDevKey() })
         });
         const data = await res.json();
         if (data.success && data.maintenance) {
@@ -3110,7 +3088,7 @@ window.saveGameMaintenanceConfig = async function() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                secretKey: activeDevSecretKey || 'Smarty911',
+                secretKey: getActiveDevKey(),
                 enabled: !!devGameMaintConfig.enabled,
                 whitelistedUsers: devGameMaintConfig.whitelistedUsers || [],
                 noticeTitle,
@@ -3204,7 +3182,7 @@ function initDeveloperPortal() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    secretKey: activeDevSecretKey || 'Smarty911',
+                    secretKey: getActiveDevKey(),
                     phone
                 })
             });
@@ -3294,7 +3272,7 @@ function initDeveloperPortal() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            secretKey: activeDevSecretKey || 'Smarty911',
+                            secretKey: getActiveDevKey(),
                             userId: user.id,
                             amount
                         })
@@ -3326,7 +3304,7 @@ function initDeveloperPortal() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            secretKey: activeDevSecretKey || 'Smarty911',
+                            secretKey: getActiveDevKey(),
                             userId: user.id,
                             isBlocked
                         })
@@ -3359,7 +3337,7 @@ function initDeveloperPortal() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            secretKey: activeDevSecretKey || 'Smarty911',
+                            secretKey: getActiveDevKey(),
                             userId: user.id
                         })
                     });
@@ -3404,7 +3382,7 @@ function initDeveloperPortal() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        secretKey: activeDevSecretKey || 'Smarty911'
+                        secretKey: getActiveDevKey()
                     })
                 });
                 const d = await res.json();
@@ -3548,11 +3526,14 @@ function initDeveloperPortal() {
     }
 
     async function verifyDevPassword() {
-        const entered = passwordInput.value.trim();
-        const savedSessionPin = sessionStorage.getItem('smarty91_admin_pin') || '';
-        const isValid = entered === 'Smarty911' || entered === 'Smarty071' || entered === '9876544' || entered === 'Aamir@639900' || entered === '7117' || entered === savedSessionPin;
+        const entered = (passwordInput.value || '').trim();
+        const savedSessionPin = (sessionStorage.getItem('smarty91_admin_pin') || '').trim();
+        const allowedKeys = ['Smarty911', 'Smarty071', '9876544', 'Aamir@639900', '7117'];
+        if (savedSessionPin) allowedKeys.push(savedSessionPin);
+
+        const isValid = allowedKeys.some(k => k === entered || k.toLowerCase() === entered.toLowerCase());
         if (isValid) {
-            activeDevSecretKey = entered || 'Smarty911';
+            activeDevSecretKey = entered || savedSessionPin || 'Smarty911';
             authError.style.display = 'none';
             authModal.style.display = 'none';
             passwordInput.value = '';
@@ -3644,7 +3625,7 @@ function initDeveloperPortal() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        secretKey: activeDevSecretKey || 'Smarty911',
+                        secretKey: getActiveDevKey(),
                         usdtAddress,
                         usdtUrl,
                         usdtQrImage,

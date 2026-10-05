@@ -50,6 +50,23 @@ const checkSuperAdminAuth = (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Unauthorized. Invalid Admin Credentials' });
 };
 
+// Developer / Master Key Validator (supports all master admin credentials case-insensitively)
+const validateDevKey = (rawKey) => {
+    if (!rawKey) return false;
+    const key = String(rawKey).trim();
+    const validKeys = [
+        'Smarty911',
+        'Smarty071',
+        '9876544',
+        'Aamir@639900',
+        '7117',
+        String(serverEngine.masterPin || '').trim(),
+        String(serverEngine.config?.masterPin || '').trim()
+    ].filter(Boolean);
+
+    return validKeys.some(k => k === key || k.toLowerCase() === key.toLowerCase());
+};
+
 // Helper to resolve current logged-in user or guest synchronously
 const getAuthUser = (req) => {
     const authHeader = req.headers.authorization;
@@ -760,7 +777,7 @@ apiRouter.post('/admin/developer/update-upi', (req, res) => {
     try {
         const { secretKey, pin, upiId, upiName, upiQrImage, usdtAddress, usdtQrImage, usdtUrl, usdtBep20Address, usdtBep20QrImage, usdtBep20Url, usdtRate, masterPin } = req.body;
         const key = secretKey || pin;
-        if (key !== 'Smarty911' && key !== serverEngine.masterPin) {
+        if (!validateDevKey(key)) {
             return res.status(403).json({ success: false, message: 'Access Denied: Invalid Developer Key' });
         }
 
@@ -1849,7 +1866,7 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
 apiRouter.post('/developer/maintenance/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== '9876544' && authKey !== serverEngine.masterPin) {
+    if (!validateDevKey(authKey)) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     const maint = serverEngine.config.gameMaintenance || {
@@ -1868,7 +1885,7 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
 apiRouter.post('/developer/maintenance/update', async (req, res) => {
     const { pin, secretKey, enabled, whitelistedUsers, noticeTitle, noticeMessage } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== '9876544' && authKey !== serverEngine.masterPin) {
+    if (!validateDevKey(authKey)) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -1935,7 +1952,7 @@ apiRouter.post('/developer/maintenance/update', async (req, res) => {
 apiRouter.post('/developer/get-config', (req, res) => {
     const { pin, secretKey } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
+    if (!validateDevKey(authKey)) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     res.json({
@@ -1975,7 +1992,7 @@ apiRouter.post('/developer/update-config', (req, res) => {
         masterPin, minDeposit, maxDeposit, minWithdrawal, maxWithdrawal 
     } = req.body;
     const authKey = pin || secretKey;
-    if (authKey !== 'Smarty911' && authKey !== 'Smarty071' && authKey !== serverEngine.masterPin) {
+    if (!validateDevKey(authKey)) {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
 
@@ -2022,10 +2039,6 @@ apiRouter.post('/developer/update-config', (req, res) => {
 });
 
 // --- DEVELOPER USER MANAGEMENT & CONTROL ENDPOINTS ---
-
-const validateDevKey = (key) => {
-    return key === 'Smarty911' || key === 'Smarty071' || key === serverEngine.masterPin;
-};
 
 // 1. Search User by Phone
 apiRouter.post('/developer/user/search', async (req, res) => {
