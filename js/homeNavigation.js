@@ -183,13 +183,26 @@ export function showGameUpdatingModal(maintInfo) {
     if (msgEl && maintInfo && maintInfo.noticeMessage) {
         msgEl.textContent = maintInfo.noticeMessage;
     }
+    modal.classList.add('active');
     modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.pointerEvents = 'auto';
+    modal.style.zIndex = '9999999';
+    const container = modal.querySelector('.vip-modal-container');
+    if (container) {
+        container.style.transform = 'translateY(0) scale(1)';
+    }
 }
 
 // Close Updating / Maintenance Popup Modal
 export function closeGameUpdatingModal() {
     const modal = document.getElementById('game-updating-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+        modal.style.opacity = '0';
+        modal.style.pointerEvents = 'none';
+    }
 }
 
 // VIP Game Opening with Sync Loader
@@ -778,13 +791,13 @@ export function applyMaintenanceStateToUI(maint) {
     const liveDot = document.querySelector('.cp-live-pulse-dot');
 
     if (isNowActive) {
-        // 1. Pause random winning news ticker -> show official maintenance / 2-day upgrade notice
+        // 1. Pause random winning news ticker -> show official maintenance / system upgrade notice
         if (marqueeTrack) {
             marqueeTrack.innerHTML = `
-                <span style="color:#fbbf24; font-weight:800;">🛠️ SYSTEM UPGRADE NOTICE: Colour Prediction server enhancements in progress (2 Days). Live bets &amp; payouts temporarily paused. Big surprises &amp; rewards launching soon! 🎁</span>
-                <span style="color:#fef08a; font-weight:700;">⚡ Upgrading to ultra-fast settlement &amp; provably fair RNG algorithms...</span>
-                <span style="color:#fbbf24; font-weight:800;">🛠️ SYSTEM UPGRADE NOTICE: Colour Prediction server enhancements in progress (2 Days). Live bets &amp; payouts temporarily paused. Big surprises &amp; rewards launching soon! 🎁</span>
-                <span style="color:#fef08a; font-weight:700;">⚡ Upgrading to ultra-fast settlement &amp; provably fair RNG algorithms...</span>
+                <span style="color:#fbbf24; font-weight:800;">🛠️ SYSTEM UPGRADING NOTICE: Adding New Games &amp; Upgrading System in progress. Live games &amp; bets paused during upgrade. Stay tuned for new releases! 🎁</span>
+                <span style="color:#fef08a; font-weight:700;">🎮 Adding brand-new exciting games &amp; ultra-fast payouts...</span>
+                <span style="color:#fbbf24; font-weight:800;">🛠️ SYSTEM UPGRADING NOTICE: Adding New Games &amp; Upgrading System in progress. Live games &amp; bets paused during upgrade. Stay tuned for new releases! 🎁</span>
+                <span style="color:#fef08a; font-weight:700;">🎮 Adding brand-new exciting games &amp; ultra-fast payouts...</span>
             `;
         }
 
@@ -798,15 +811,15 @@ export function applyMaintenanceStateToUI(maint) {
             streamContainer.innerHTML = `
                 <div style="text-align:center; padding:18px 12px; background:rgba(245,158,11,0.06); border:1px dashed rgba(245,158,11,0.25); border-radius:8px; margin:4px 0;">
                     <div style="font-size:20px; margin-bottom:5px;">🛠️</div>
-                    <div style="font-size:12px; font-weight:800; color:#fbbf24; margin-bottom:4px;">Live Stream Paused for Scheduled Upgrade</div>
-                    <div style="font-size:10.5px; color:#cbd5e1; line-height:1.45;">Game servers are undergoing 2-day maintenance. Live winning feeds and bets will resume automatically once completed.</div>
+                    <div style="font-size:12px; font-weight:800; color:#fbbf24; margin-bottom:4px;">Live Stream Paused for Scheduled Upgrading</div>
+                    <div style="font-size:10.5px; color:#cbd5e1; line-height:1.45;">Game servers are undergoing upgrade. Adding new games &amp; upgrading system. Live winning feeds and bets will resume automatically once completed.</div>
                 </div>
             `;
         }
 
-        // 4. Update Game Card Live Badge to "UPDATING (2 DAYS)" with amber dot
+        // 4. Update Game Card Live Badge to "SYSTEM UPGRADING" with amber dot
         if (countEl) {
-            countEl.textContent = 'UPDATING (2 DAYS)';
+            countEl.textContent = 'SYSTEM UPGRADING';
             countEl.style.color = '#fef08a';
         }
         if (liveDot) {
@@ -825,7 +838,7 @@ export function applyMaintenanceStateToUI(maint) {
             liveDot.style.background = '#10b981';
             liveDot.style.boxShadow = '0 0 8px #10b981';
         }
-        if (countEl && countEl.textContent.includes('UPDATING')) {
+        if (countEl && (countEl.textContent.includes('UPDATING') || countEl.textContent.includes('SYSTEM UPGRADE'))) {
             const saved = parseInt(sessionStorage.getItem('cp_live_players_count') || '36450', 10);
             countEl.textContent = `${saved.toLocaleString('en-IN')}`;
             countEl.style.color = '#fff';
@@ -928,7 +941,7 @@ function initLivePlayerCounter() {
     let currentPlayers = saved;
 
     function renderCount() {
-        if (window.isGameMaintenanceActive) return; // Keep "UPDATING (2 DAYS)" displayed
+        if (window.isGameMaintenanceActive) return; // Keep "SYSTEM UPGRADE" displayed
         if (countEl) {
             countEl.textContent = `${currentPlayers.toLocaleString('en-IN')}`;
             countEl.style.color = '#fff';

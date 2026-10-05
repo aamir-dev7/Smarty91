@@ -356,8 +356,8 @@ class FirebaseSyncManager {
                 if (data.gameMaintenance) {
                     this.engine.config.gameMaintenance = {
                         enabled: !!data.gameMaintenance.enabled,
-                        noticeTitle: data.gameMaintenance.noticeTitle || 'System Upgrade in Progress',
-                        noticeMessage: data.gameMaintenance.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                        noticeTitle: data.gameMaintenance.noticeTitle || 'Adding New Games & Upgrading System',
+                        noticeMessage: data.gameMaintenance.noticeMessage || 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
                         whitelistedUsers: Array.isArray(data.gameMaintenance.whitelistedUsers) ? data.gameMaintenance.whitelistedUsers : []
                     };
                 }
@@ -388,8 +388,8 @@ class FirebaseSyncManager {
                     usdtRate: this.engine.config.usdtRate || 102,
                     gameMaintenance: this.engine.config.gameMaintenance || {
                         enabled: false,
-                        noticeTitle: 'System Upgrade in Progress',
-                        noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                        noticeTitle: 'Adding New Games & Upgrading System',
+                        noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
                         whitelistedUsers: []
                     },
                     universalSync: false,
@@ -425,8 +425,8 @@ class FirebaseSyncManager {
                     if (d.gameMaintenance) {
                         this.engine.config.gameMaintenance = {
                             enabled: !!d.gameMaintenance.enabled,
-                            noticeTitle: d.gameMaintenance.noticeTitle || 'System Upgrade in Progress',
-                            noticeMessage: d.gameMaintenance.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                            noticeTitle: d.gameMaintenance.noticeTitle || 'Adding New Games & Upgrading System',
+                            noticeMessage: d.gameMaintenance.noticeMessage || 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
                             whitelistedUsers: Array.isArray(d.gameMaintenance.whitelistedUsers) ? d.gameMaintenance.whitelistedUsers : []
                         };
                     }
@@ -1247,8 +1247,8 @@ class FirebaseSyncManager {
                 referralStars: config.referralStars || null,
                 gameMaintenance: config.gameMaintenance || {
                     enabled: false,
-                    noticeTitle: 'System Upgrade in Progress',
-                    noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                    noticeTitle: 'Adding New Games & Upgrading System',
+                    noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
                     whitelistedUsers: []
                 },
                 universalSync: false,

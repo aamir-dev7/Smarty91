@@ -4027,6 +4027,52 @@ div[role="dialog"][data-v-7f36fe93].van-popup--closing,
   }
 }
 
+/* -------------------------------------------------------------
+   SYSTEM UPGRADE / MAINTENANCE POPUP & TOP BAR (GLOBAL OVERRIDES)
+   ------------------------------------------------------------- */
+#game-updating-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 9999999 !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 14px !important;
+  box-sizing: border-box !important;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.22s ease, visibility 0.22s ease !important;
+}
+
+#game-updating-modal.active,
+#game-updating-modal[style*="display: flex"] {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+#game-updating-modal .vip-modal-container {
+  transform: translateY(15px) scale(0.96) !important;
+  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+#game-updating-modal.active .vip-modal-container,
+#game-updating-modal[style*="display: flex"] .vip-modal-container {
+  transform: translateY(0) scale(1) !important;
+}
+
+#global-maint-top-bar {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+
 
 
 

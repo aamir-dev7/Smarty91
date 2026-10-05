@@ -43,11 +43,27 @@
             });
         }
     } else {
-        // Protected App Pages (index.html, profile.html, payment.html)
+        // Protected App Pages (index.html, profile.html, payment.html, etc.)
         if (!token || !userId) {
             // Not logged in -> Immediately route to login.html
             window.location.replace('login.html');
             return;
+        }
+
+        // If user is on a secondary page while system upgrade is active, route back to index.html
+        const pName = window.location.pathname;
+        const isSecondaryPage = !pName.endsWith('index.html') && pName !== '/' && !pName.includes('login') && !pName.includes('smarty-');
+        if (isSecondaryPage) {
+            fetch('/api/game/maintenance-status', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(d => {
+                if (d && d.success && d.maintenance && d.maintenance.enabled && !d.maintenance.canEnter) {
+                    window.location.replace('index.html');
+                }
+            })
+            .catch(() => {});
         }
 
         // Verify token in background with server

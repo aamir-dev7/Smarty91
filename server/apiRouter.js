@@ -345,8 +345,8 @@ apiRouter.get('/games/status', (req, res) => {
         serverTime: Date.now(),
         gameMaintenance: {
             enabled: isGlobalMaintenance,
-            noticeTitle: serverEngine.config.gameMaintenance?.noticeTitle || 'System Upgrade in Progress',
-            noticeMessage: serverEngine.config.gameMaintenance?.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+            noticeTitle: serverEngine.config.gameMaintenance?.noticeTitle || 'Adding New Games & Upgrading System',
+            noticeMessage: serverEngine.config.gameMaintenance?.noticeMessage || 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
             whitelistedUsers: serverEngine.config.gameMaintenance?.whitelistedUsers || []
         },
         modes: modesData
@@ -1842,8 +1842,8 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
     try {
         const maint = serverEngine.config.gameMaintenance || {
             enabled: true,
-            noticeTitle: 'System Upgrade & New Games Launch',
-            noticeMessage: 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
+            noticeTitle: 'Adding New Games & Upgrading System',
+            noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
             whitelistedUsers: []
         };
 
@@ -1866,8 +1866,8 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
             success: true,
             maintenance: {
                 enabled: !!maint.enabled,
-                noticeTitle: maint.noticeTitle || 'System Upgrade & New Games Launch',
-                noticeMessage: maint.noticeMessage || 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
+                noticeTitle: maint.noticeTitle || 'Adding New Games & Upgrading System',
+                noticeMessage: maint.noticeMessage || 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
                 whitelistedUsers: Array.isArray(maint.whitelistedUsers) ? maint.whitelistedUsers : [],
                 isWhitelisted,
                 canEnter
@@ -1887,8 +1887,8 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
     }
     const maint = serverEngine.config.gameMaintenance || {
         enabled: true,
-        noticeTitle: 'System Upgrade & New Games Launch',
-        noticeMessage: 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
+        noticeTitle: 'Adding New Games & Upgrading System',
+        noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
         whitelistedUsers: []
     };
     res.json({
@@ -1908,8 +1908,8 @@ apiRouter.post('/developer/maintenance/update', async (req, res) => {
     if (!serverEngine.config.gameMaintenance) {
         serverEngine.config.gameMaintenance = {
             enabled: false,
-            noticeTitle: 'System Upgrade in Progress',
-            noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+            noticeTitle: 'Adding New Games & Upgrading System',
+            noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
             whitelistedUsers: []
         };
     }
@@ -1923,10 +1923,10 @@ apiRouter.post('/developer/maintenance/update', async (req, res) => {
         );
     }
     if (noticeTitle !== undefined) {
-        serverEngine.config.gameMaintenance.noticeTitle = String(noticeTitle).trim() || 'System Upgrade in Progress';
+        serverEngine.config.gameMaintenance.noticeTitle = String(noticeTitle).trim() || 'Adding New Games & Upgrading System';
     }
     if (noticeMessage !== undefined) {
-        serverEngine.config.gameMaintenance.noticeMessage = String(noticeMessage).trim() || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!';
+        serverEngine.config.gameMaintenance.noticeMessage = String(noticeMessage).trim() || 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!';
     }
 
     // Immediately stop or unfreeze game state across all modes
@@ -1990,8 +1990,8 @@ apiRouter.post('/developer/get-config', (req, res) => {
         masterPin: serverEngine.masterPin || 'Smarty911',
         gameMaintenance: serverEngine.config.gameMaintenance || {
             enabled: false,
-            noticeTitle: 'System Upgrade in Progress',
-            noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+            noticeTitle: 'Adding New Games & Upgrading System',
+            noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
             whitelistedUsers: []
         }
     });
