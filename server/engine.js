@@ -97,9 +97,9 @@ class Smarty91ServerEngine {
             },
             // Prediction Game Maintenance & Whitelist Access Control
             gameMaintenance: {
-                enabled: false,
-                noticeTitle: 'System Upgrade in Progress',
-                noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                enabled: true,
+                noticeTitle: 'System Upgrade & New Games Launch',
+                noticeMessage: 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
                 whitelistedUsers: []
             },
             // Smart Risk & House Profit Engine
@@ -1485,8 +1485,8 @@ class Smarty91ServerEngine {
             serverTime: now,
             gameMaintenance: {
                 enabled: isGlobalMaintenance,
-                noticeTitle: this.config.gameMaintenance?.noticeTitle || 'System Upgrade in Progress',
-                noticeMessage: this.config.gameMaintenance?.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                noticeTitle: this.config.gameMaintenance?.noticeTitle || 'System Upgrade & New Games Launch',
+                noticeMessage: this.config.gameMaintenance?.noticeMessage || 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
                 whitelistedUsers: this.config.gameMaintenance?.whitelistedUsers || []
             },
             modes: modesData

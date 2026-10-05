@@ -471,7 +471,7 @@ apiRouter.post('/bets/place', async (req, res) => {
                 return res.status(403).json({
                     success: false,
                     isMaintenance: true,
-                    message: maint.noticeMessage || 'Prediction game is currently under 2-day scheduled upgrade maintenance. Big surprise coming soon!'
+                    message: maint.noticeMessage || 'Platform is currently undergoing a 4-day pending system upgrade. New games are being added!'
                 });
             }
         }
@@ -878,6 +878,22 @@ apiRouter.post('/wallet/withdraw', async (req, res) => {
         const authUser = await getAuthUserAsync(req);
         if (!authUser || !authUser.id) {
             return res.status(401).json({ success: false, message: 'Please log in to submit a withdrawal.' });
+        }
+
+        const maint = serverEngine.config.gameMaintenance;
+        if (maint && maint.enabled) {
+            const allowed = Array.isArray(maint.whitelistedUsers) ? maint.whitelistedUsers : [];
+            const isWhitelisted = allowed.some(u => {
+                const term = String(u).trim().toLowerCase();
+                return term && (String(authUser.id).toLowerCase() === term || String(authUser.phone || '').toLowerCase() === term);
+            });
+            if (!isWhitelisted) {
+                return res.status(403).json({
+                    success: false,
+                    isMaintenance: true,
+                    message: maint.noticeMessage || 'Platform update in progress! 4 Days Pending Status.'
+                });
+            }
         }
         const { amount, accountHolderName, bankName, accountNumber, ifsc, securityPin, upiId, channel, usdtAddress } = req.body;
         const result = serverEngine.createWithdrawalRequest({
@@ -1825,9 +1841,9 @@ apiRouter.post('/admin/users/adjust-turnover', checkSuperAdminAuth, async (req, 
 apiRouter.get('/game/maintenance-status', async (req, res) => {
     try {
         const maint = serverEngine.config.gameMaintenance || {
-            enabled: false,
-            noticeTitle: 'System Upgrade in Progress',
-            noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+            enabled: true,
+            noticeTitle: 'System Upgrade & New Games Launch',
+            noticeMessage: 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
             whitelistedUsers: []
         };
 
@@ -1850,8 +1866,8 @@ apiRouter.get('/game/maintenance-status', async (req, res) => {
             success: true,
             maintenance: {
                 enabled: !!maint.enabled,
-                noticeTitle: maint.noticeTitle || 'System Upgrade in Progress',
-                noticeMessage: maint.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+                noticeTitle: maint.noticeTitle || 'System Upgrade & New Games Launch',
+                noticeMessage: maint.noticeMessage || 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
                 whitelistedUsers: Array.isArray(maint.whitelistedUsers) ? maint.whitelistedUsers : [],
                 isWhitelisted,
                 canEnter
@@ -1870,9 +1886,9 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     const maint = serverEngine.config.gameMaintenance || {
-        enabled: false,
-        noticeTitle: 'System Upgrade in Progress',
-        noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you. Stay tuned!',
+        enabled: true,
+        noticeTitle: 'System Upgrade & New Games Launch',
+        noticeMessage: 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!',
         whitelistedUsers: []
     };
     res.json({

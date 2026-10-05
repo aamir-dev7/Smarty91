@@ -2831,10 +2831,10 @@ window.switchDevPortalTab = function(tabId) {
 // PREDICTION GAME MAINTENANCE / UPDATING MODE DEV CONTROLS
 // -------------------------------------------------------------
 let devGameMaintConfig = {
-    enabled: false,
+    enabled: true,
     whitelistedUsers: [],
-    noticeTitle: 'System Upgrade in Progress',
-    noticeMessage: 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you with exciting rewards. Stay tuned!'
+    noticeTitle: 'System Update & New Games Launch',
+    noticeMessage: 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!'
 };
 let devRegisteredUsersCache = [];
 let devWhitelistFilterText = '';
@@ -2851,8 +2851,8 @@ async function loadGameMaintenanceDevConfig() {
             devGameMaintConfig = {
                 enabled: !!data.maintenance.enabled,
                 whitelistedUsers: Array.isArray(data.maintenance.whitelistedUsers) ? data.maintenance.whitelistedUsers : [],
-                noticeTitle: data.maintenance.noticeTitle || 'System Upgrade in Progress',
-                noticeMessage: data.maintenance.noticeMessage || 'We are currently undergoing scheduled system maintenance and major game upgrades for the next 2 days! A big surprise awaits you with exciting rewards. Stay tuned!'
+                noticeTitle: data.maintenance.noticeTitle || 'System Update & New Games Launch',
+                noticeMessage: data.maintenance.noticeMessage || 'Platform update in progress! We are upgrading our system and integrating exciting new games. All gaming and wallet activities are on hold during this 4-day pending upgrade. Stay tuned for the grand release!'
             };
             const titleInput = document.getElementById('dev-maint-notice-title');
             const msgInput = document.getElementById('dev-maint-notice-msg');
@@ -3053,16 +3053,16 @@ window.openMaintenancePreviewPopup = function() {
                     <span>LIVE CLIENT POPUP PREVIEW</span>
                 </div>
                 <div style="background:linear-gradient(90deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.25) 50%, rgba(245,158,11,0.1) 100%); border-top:1px solid rgba(245,158,11,0.3); border-bottom:1px solid rgba(245,158,11,0.3); padding:8px 10px; margin:10px 0 14px 0; border-radius:6px;">
-                    <div style="font-size:13px; font-weight:800; color:#fbbf24;">⏳ 2 Days Scheduled Maintenance</div>
-                    <div style="font-size:11px; color:#fef08a; font-weight:700; margin-top:2px;">🎁 A Big Surprise is Coming for You!</div>
+                    <div style="font-size:13px; font-weight:800; color:#fbbf24;">⏳ 4 Days Pending Status</div>
+                    <div style="font-size:11px; color:#fef08a; font-weight:700; margin-top:2px;">🎮 Exciting New Games Being Added!</div>
                 </div>
                 <p style="font-size:12px; color:#cbd5e1; line-height:1.55; margin-bottom:14px; text-align:left;">
                     ${msg}
                 </p>
                 <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px; text-align:left; font-size:11px; color:#94a3b8; display:flex; flex-direction:column; gap:6px;">
-                    <div style="color:#e2e8f0;">✨ Exclusive Big Surprise bonuses for active VIPs</div>
-                    <div style="color:#e2e8f0;">⚡ Enhanced prediction speed & instant payouts</div>
-                    <div style="color:#e2e8f0;">🛡️ Upgraded security & Provably Fair RNG engine</div>
+                    <div style="color:#e2e8f0;">⏳ 4 Days Pending System Maintenance & Upgrades</div>
+                    <div style="color:#e2e8f0;">🎮 Adding brand-new high-multiplier games & modes</div>
+                    <div style="color:#e2e8f0;">⚡ Enhanced speed, higher payouts & bigger bonus surprises</div>
                 </div>
             </div>
         `;
