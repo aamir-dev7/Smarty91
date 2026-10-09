@@ -1841,7 +1841,7 @@ apiRouter.post('/admin/users/adjust-turnover', checkSuperAdminAuth, async (req, 
 apiRouter.get('/game/maintenance-status', async (req, res) => {
     try {
         const maint = serverEngine.config.gameMaintenance || {
-            enabled: true,
+            enabled: false,
             noticeTitle: 'Adding New Games & Upgrading System',
             noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
             whitelistedUsers: []
@@ -1886,7 +1886,7 @@ apiRouter.post('/developer/maintenance/get-config', (req, res) => {
         return res.status(401).json({ success: false, message: 'Invalid Developer Secret Key' });
     }
     const maint = serverEngine.config.gameMaintenance || {
-        enabled: true,
+        enabled: false,
         noticeTitle: 'Adding New Games & Upgrading System',
         noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
         whitelistedUsers: []

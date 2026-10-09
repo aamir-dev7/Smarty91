@@ -97,7 +97,7 @@ class Smarty91ServerEngine {
             },
             // Prediction Game Maintenance & Whitelist Access Control
             gameMaintenance: {
-                enabled: true,
+                enabled: false,
                 noticeTitle: 'Adding New Games & Upgrading System',
                 noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
                 whitelistedUsers: []

@@ -1,8 +1,8 @@
 // js/gameMaintenance.js - Universal Platform Lockdown & Live 4-Day Countdown Engine
 
-let isMaintenanceBlocked = true; // Active by default
+let isMaintenanceBlocked = false; // Turned off - active working condition!
 let currentMaintConfig = {
-    enabled: true,
+    enabled: false,
     noticeTitle: 'Adding New Games & Upgrading System',
     noticeMessage: 'Platform update in progress! Adding new games & upgrading system. All gaming and wallet activities are on hold during this upgrade. Stay tuned for the grand release!',
     whitelistedUsers: []
@@ -514,17 +514,20 @@ if (typeof window !== 'undefined') {
     window.closeGameUpdatingModal = closeMaintenancePopupModal;
     window.openGameUpdatingModal = showMaintenancePopupModal;
 
-    wrapGlobalNavigationForMaintenance();
-
-    // Start live countdown immediately
-    startMaintenanceCountdown();
-
-    // Show initial top banner and block state
+    // Show initial top banner and block state ONLY if maintenance is active
     if (isMaintenanceBlocked) {
+        wrapGlobalNavigationForMaintenance();
+        startMaintenanceCountdown();
         setTimeout(() => {
             updateTopBanner(true);
             updateBlockerOverlay(true);
             showMaintenancePopupModal();
         }, 100);
+    } else {
+        setTimeout(() => {
+            updateTopBanner(false);
+            updateBlockerOverlay(false);
+            closeMaintenancePopupModal();
+        }, 50);
     }
 }
