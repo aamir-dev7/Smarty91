@@ -1594,12 +1594,16 @@ class Smarty91ServerEngine {
 
     async reconcilePendingBetsForUser(userId) {
         if (!userId) return;
+        if (!this._userReconcileLocks) this._userReconcileLocks = new Set();
+        const cleanUid = String(userId).trim();
+        if (this._userReconcileLocks.has(cleanUid)) return;
+        this._userReconcileLocks.add(cleanUid);
+
         try {
-            const cleanUid = String(userId).trim();
             const cleanDigits = cleanUid.replace(/\D/g, '');
             const cleanPhone = (cleanDigits.length === 12 && cleanDigits.startsWith('91')) ? cleanDigits.slice(2) : cleanDigits;
 
-            // Find all pending bets for this user in memory and settledBetsHistory
+            // Find all pending bets for this user in memory
             const userPendingBets = [];
             for (const [, bet] of this.bets) {
                 if (bet && (bet.status === 'PENDING' || bet.status === 'pending')) {
@@ -1609,38 +1613,33 @@ class Smarty91ServerEngine {
                     }
                 }
             }
-            for (const [, bet] of this.settledBetsHistory) {
-                if (bet && (bet.status === 'PENDING' || bet.status === 'pending')) {
-                    const bUid = String(bet.userId || '').trim();
-                    if (bUid === cleanUid || (cleanPhone && (bUid === cleanPhone || bUid === 'usr_' + cleanPhone || bUid.endsWith(cleanPhone)))) {
-                        if (!userPendingBets.some(b => b.id === bet.id)) {
-                            userPendingBets.push(bet);
-                        }
-                    }
-                }
-            }
-
-            // Also check Firestore for pending bets for this user
-            try {
-                const fsBets = await firebaseSync.getUserBets(cleanUid);
-                if (Array.isArray(fsBets)) {
-                    fsBets.forEach(b => {
-                        if (b && (b.status === 'PENDING' || b.status === 'pending')) {
-                            if (!userPendingBets.some(ub => ub.id === b.id)) {
-                                userPendingBets.push(b);
-                            }
-                        }
-                    });
-                }
-            } catch (e) {}
 
             if (userPendingBets.length === 0) return;
 
             const now = Date.now();
             let totalRecoveredPayout = 0;
             const settledBetsToSave = [];
+            const recoveredWins = [];
 
             for (const bet of userPendingBets) {
+                // Strict Idempotency Check: if already settled or credited, never re-credit
+                if (bet.status === 'WON' || bet.status === 'LOST') {
+                    continue;
+                }
+                const existingSettled = this.settledBetsHistory.get(bet.id);
+                if (existingSettled && (existingSettled.status === 'WON' || existingSettled.status === 'LOST')) {
+                    this.bets.delete(bet.id);
+                    continue;
+                }
+                const alreadyCredited = this.ledger.some(l => l.referenceId === bet.id && l.type === 'BET_WIN_CREDIT');
+                if (alreadyCredited) {
+                    bet.status = 'WON';
+                    this.settledBetsHistory.set(bet.id, { ...bet });
+                    this.bets.delete(bet.id);
+                    settledBetsToSave.push(bet);
+                    continue;
+                }
+
                 const mode = bet.mode;
                 const state = this.modes[mode];
                 if (!state) continue;
@@ -1694,6 +1693,7 @@ class Smarty91ServerEngine {
 
                     if (settlement.isWin && settlement.payoutAmount > 0) {
                         totalRecoveredPayout = Number((totalRecoveredPayout + settlement.payoutAmount).toFixed(2));
+                        recoveredWins.push({ bet, settlement });
                     }
                 }
             }
@@ -1703,8 +1703,24 @@ class Smarty91ServerEngine {
                 if (liveUser) {
                     const balBefore = Number(liveUser.balance || 0);
                     liveUser.balance = Number((balBefore + totalRecoveredPayout).toFixed(2));
+                    const balAfter = liveUser.balance;
                     this.users.set(liveUser.id, liveUser);
                     this.users.set(cleanUid, liveUser);
+
+                    for (const winItem of recoveredWins) {
+                        this.ledger.unshift({
+                            id: 'LEDGER_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                            userId: liveUser.id,
+                            type: 'BET_WIN_CREDIT',
+                            amount: winItem.settlement.payoutAmount,
+                            balanceBefore: balBefore,
+                            balanceAfter: balAfter,
+                            referenceId: winItem.bet.id,
+                            timestamp: new Date().toISOString(),
+                            description: `Recovered Win on ${winItem.bet.mode} round ${winItem.bet.periodId}`
+                        });
+                    }
+
                     await firebaseSync.updateUserBalance(
                         liveUser.id,
                         liveUser.balance,
@@ -1729,6 +1745,8 @@ class Smarty91ServerEngine {
             }
         } catch (err) {
             console.warn('[Engine] reconcilePendingBetsForUser error:', err.message);
+        } finally {
+            this._userReconcileLocks.delete(cleanUid);
         }
     }
 
@@ -1897,7 +1915,14 @@ class Smarty91ServerEngine {
 
     async _settleRound(mode, periodId) {
         const state = this.modes[mode];
-        const modeConfig = this.config.modes[mode];
+        if (!state) return;
+        const pidStr = String(periodId).trim();
+        if (!state.currentlySettlingPeriods) state.currentlySettlingPeriods = new Set();
+        if (state.currentlySettlingPeriods.has(pidStr)) return;
+        state.currentlySettlingPeriods.add(pidStr);
+
+        try {
+            const modeConfig = this.config.modes[mode];
 
         // 1. Determine or retrieve outcome for this round
         let preComputed = null;
@@ -2010,6 +2035,22 @@ class Smarty91ServerEngine {
         for (const [userId, summary] of userPayoutMap.entries()) {
             if (summary.totalWin <= 0) continue;
 
+            // Strict Idempotency: filter out any bets that were already credited in ledger
+            const uncreditedWins = [];
+            let totalUncreditedWin = 0;
+            for (const item of summary.wins) {
+                const alreadyCredited = this.ledger.some(l => l.referenceId === item.bet.id && l.type === 'BET_WIN_CREDIT');
+                if (!alreadyCredited) {
+                    uncreditedWins.push(item);
+                    totalUncreditedWin = Number((totalUncreditedWin + item.settlement.payoutAmount).toFixed(2));
+                }
+            }
+
+            if (totalUncreditedWin <= 0) {
+                console.log(`[Payout Engine] All winning bets for user ${userId} in period ${periodId} were already credited. Skipping duplicate payout.`);
+                continue;
+            }
+
             // Load user (memory -> disk -> Firestore)
             let liveUser = this.getUser(userId);
             if (!liveUser) {
@@ -2021,7 +2062,7 @@ class Smarty91ServerEngine {
 
             if (liveUser) {
                 balanceBefore = Number(liveUser.balance || 0);
-                liveUser.balance = Number((balanceBefore + summary.totalWin).toFixed(2));
+                liveUser.balance = Number((balanceBefore + totalUncreditedWin).toFixed(2));
                 balanceAfter = liveUser.balance;
                 liveUser._localVersion = (liveUser._localVersion || 1) + 1;
                 liveUser._lastLocalUpdate = Date.now();
@@ -2034,8 +2075,8 @@ class Smarty91ServerEngine {
                     this.users.set('usr_' + liveUser.phone, liveUser);
                 }
 
-                // Add ledger entries for each winning bet
-                for (const item of summary.wins) {
+                // Add ledger entries for each newly credited winning bet
+                for (const item of uncreditedWins) {
                     const lEntry = {
                         id: 'LEDGER_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                         userId: liveUser.id,
@@ -2055,26 +2096,26 @@ class Smarty91ServerEngine {
                     await firebaseSync.updateUserBalance(
                         liveUser.id,
                         liveUser.balance,
-                        `Bet Win Payout: ${mode} ${periodId} (+₹${summary.totalWin})`,
+                        `Bet Win Payout: ${mode} ${periodId} (+₹${totalUncreditedWin})`,
                         liveUser.bonusBalance,
                         liveUser.requiredTurnover
                     );
-                    console.log(`[Payout Success] Credited ₹${summary.totalWin} to user ${liveUser.id} (${liveUser.phone || ''}). New balance: ₹${liveUser.balance}`);
+                    console.log(`[Payout Success] Credited ₹${totalUncreditedWin} to user ${liveUser.id} (${liveUser.phone || ''}). New balance: ₹${liveUser.balance}`);
                 } catch (fsErr) {
                     console.error(`[Payout Error] updateUserBalance failed for user ${userId}, executing atomic increment fallback:`, fsErr.message);
                     await firebaseSync.incrementUserBalance(
                         liveUser.id,
-                        summary.totalWin,
-                        `Bet Win Fallback: ${mode} ${periodId} (+₹${summary.totalWin})`
+                        totalUncreditedWin,
+                        `Bet Win Fallback: ${mode} ${periodId} (+₹${totalUncreditedWin})`
                     );
                 }
             } else {
                 // User not found in memory/disk -> Atomically increment directly in Firestore!
-                console.warn(`[Payout Fallback] User ${userId} could not be resolved into memory. Executing direct Firestore atomic increment for ₹${summary.totalWin}`);
+                console.warn(`[Payout Fallback] User ${userId} could not be resolved into memory. Executing direct Firestore atomic increment for ₹${totalUncreditedWin}`);
                 await firebaseSync.incrementUserBalance(
                     userId,
-                    summary.totalWin,
-                    `Bet Win Auto-Credit: ${mode} ${periodId} (+₹${summary.totalWin})`
+                    totalUncreditedWin,
+                    `Bet Win Auto-Credit: ${mode} ${periodId} (+₹${totalUncreditedWin})`
                 );
             }
         }
@@ -2128,6 +2169,9 @@ class Smarty91ServerEngine {
                 timestamp: new Date().toISOString()
             });
             firebaseSync.logAdminAction('MODE_PAUSED_AFTER_ROUND', logMsg);
+        }
+        } finally {
+            state.currentlySettlingPeriods.delete(pidStr);
         }
     }
 
@@ -2331,7 +2375,6 @@ class Smarty91ServerEngine {
 
             // Cache active bet & ledger in memory immediately
             this.bets.set(betId, betOrder);
-            this.settledBetsHistory.set(betId, { ...betOrder });
             this.ledger.unshift(ledgerEntry);
 
             // Fast non-blocking async disk schedule & dirty batch flag
