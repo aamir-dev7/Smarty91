@@ -1306,6 +1306,44 @@ class FirebaseSyncManager {
         }
     }
 
+    async fetchAllPendingBets() {
+        if (!this._checkQuota()) return [];
+        try {
+            const betsCol = collection(db, 'bets');
+            const q = query(betsCol, where('status', '==', 'PENDING'), limit(200));
+            const querySnap = await getDocs(q);
+            const bets = [];
+            querySnap.forEach(docSnap => {
+                const b = docSnap.data();
+                if (b && b.id) {
+                    bets.push(b);
+                }
+            });
+            return bets;
+        } catch (err) {
+            this._handleQuotaError(err);
+            console.warn('[Firebase] fetchAllPendingBets error:', err.message);
+            return [];
+        }
+    }
+
+    async fetchSettledRound(mode, periodId) {
+        if (!this._checkQuota()) return null;
+        try {
+            const historyId = `${mode}_${periodId}`;
+            const historyRef = doc(db, 'game_history', historyId);
+            const snap = await getDoc(historyRef);
+            if (snap.exists()) {
+                return snap.data();
+            }
+            return null;
+        } catch (err) {
+            this._handleQuotaError(err);
+            console.warn(`[Firebase] fetchSettledRound error for ${mode} ${periodId}:`, err.message);
+            return null;
+        }
+    }
+
     async fetchPreDecidedOutcome(mode, periodId) {
         if (!this._checkQuota()) return null;
         try {

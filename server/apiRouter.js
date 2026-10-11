@@ -509,6 +509,20 @@ apiRouter.get('/bets/my-history/:mode', async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limitAmount = parseInt(req.query.limit, 10) || 10;
 
+        // Auto-reconcile any pending bets from finished rounds before querying
+        await serverEngine.reconcilePendingBetsForUser(authUser.id);
+
+        const isUserMatch = (bUid) => {
+            if (!bUid) return false;
+            const b = String(bUid).trim();
+            const a = String(authUser.id || '').trim();
+            const p = String(authUser.phone || '').trim();
+            if (b === a) return true;
+            if (p && (b === p || b === 'usr_' + p || b.endsWith(p))) return true;
+            if (b.replace('usr_', '') === a.replace('usr_', '')) return true;
+            return false;
+        };
+
         // Fetch user bets from in-memory cache first, fallback to Firestore once every 2 minutes
         const cacheKey = `${authUser.id}:${mode}`;
         let firestoreBets = [];
@@ -544,7 +558,7 @@ apiRouter.get('/bets/my-history/:mode', async (req, res) => {
         if (serverEngine.settledBetsHistory && serverEngine.settledBetsHistory.size > 0) {
             const targetMode = String(mode).toLowerCase().replace('wingo', '').trim();
             for (const [, b] of serverEngine.settledBetsHistory) {
-                if (b && b.userId === authUser.id) {
+                if (b && isUserMatch(b.userId)) {
                     const betMode = String(b.mode || '').toLowerCase().replace('wingo', '').trim();
                     if (betMode === targetMode || b.mode === mode) {
                         if (!b.periodId && b.period) b.periodId = b.period;
@@ -564,7 +578,7 @@ apiRouter.get('/bets/my-history/:mode', async (req, res) => {
         if (serverEngine.bets && serverEngine.bets.size > 0) {
             const targetMode = String(mode).toLowerCase().replace('wingo', '').trim();
             for (const [, b] of serverEngine.bets) {
-                if (b && b.userId === authUser.id) {
+                if (b && isUserMatch(b.userId)) {
                     const betMode = String(b.mode || '').toLowerCase().replace('wingo', '').trim();
                     if (betMode === targetMode || b.mode === mode) {
                         if (!b.periodId && b.period) b.periodId = b.period;
@@ -635,6 +649,9 @@ apiRouter.get('/wallet/balance', async (req, res) => {
         if (!authUser) {
             return res.status(401).json({ success: false, message: 'Unauthorized. Please login again.' });
         }
+
+        // Auto-reconcile any pending bets from finished rounds before querying balance
+        await serverEngine.reconcilePendingBetsForUser(authUser.id);
         
         // Priority 1: Live in-memory engine user (guaranteed instant reflection on bet settle/win)
         const liveUser = serverEngine.getUser(authUser.id) || serverEngine.users.get(authUser.id);

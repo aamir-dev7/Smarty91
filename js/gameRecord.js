@@ -605,17 +605,31 @@ export async function initGameRecord() {
     // Start local and server timers
     startMasterScheduler();
 
-    // Recover instantly from background sleep/minimizing
+    // Recover instantly from background sleep/minimizing or internet reconnection
+    const recoverState = () => {
+        syncServerBalance(false).catch(() => {});
+        syncServerGameState().then(() => {
+            SUPPORTED_MODES.forEach(mode => {
+                fetchUserBetsFromServer(mode, 1).catch(() => {});
+            });
+            syncServerBalance(false).catch(() => {});
+        }).catch(() => {});
+        setTimeout(() => syncServerBalance(false).catch(() => {}), 1000);
+        setTimeout(() => syncServerBalance(false).catch(() => {}), 2500);
+    };
+
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            syncServerBalance(false).catch(() => {});
-            syncServerGameState().then(() => {
-                SUPPORTED_MODES.forEach(mode => {
-                    fetchUserBetsFromServer(mode, 1).catch(() => {});
-                });
-                syncServerBalance(false).catch(() => {});
-            }).catch(() => {});
-            setTimeout(() => syncServerBalance(false).catch(() => {}), 1000);
+            recoverState();
         }
+    });
+
+    window.addEventListener('online', () => {
+        console.log('[Network] Reconnected to internet, recovering state...');
+        recoverState();
+    });
+
+    window.addEventListener('focus', () => {
+        recoverState();
     });
 }

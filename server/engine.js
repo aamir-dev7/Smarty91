@@ -483,6 +483,44 @@ class Smarty91ServerEngine {
         return null;
     }
 
+    async ensureUserLoaded(userId) {
+        if (!userId) return null;
+        let user = this.getUser(userId);
+        if (user) return user;
+
+        // 1. Try reloading users from disk
+        this._loadUsersFromDisk();
+        user = this.getUser(userId);
+        if (user) return user;
+
+        // 2. Fetch fresh user from Firestore (Source of Truth)
+        try {
+            const cleanDigits = String(userId).replace(/\D/g, '');
+            const cleanPhone = (cleanDigits.length === 12 && cleanDigits.startsWith('91')) ? cleanDigits.slice(2) : cleanDigits;
+
+            let fsUser = await firebaseSync.fetchUserFromFirestore(userId);
+            if (!fsUser && !String(userId).startsWith('usr_')) {
+                fsUser = await firebaseSync.fetchUserFromFirestore('usr_' + userId);
+            }
+            if (!fsUser && cleanPhone && cleanPhone.length >= 10) {
+                fsUser = await firebaseSync.fetchUserByPhoneFromFirestore(cleanPhone);
+            }
+
+            if (fsUser) {
+                this.users.set(fsUser.id, fsUser);
+                if (userId !== fsUser.id) this.users.set(userId, fsUser);
+                if (cleanPhone) {
+                    this.users.set(cleanPhone, fsUser);
+                    this.users.set('usr_' + cleanPhone, fsUser);
+                }
+                return fsUser;
+            }
+        } catch (e) {
+            console.warn(`[Engine] ensureUserLoaded note for ${userId}:`, e.message);
+        }
+        return null;
+    }
+
     _hashPassword(password) {
         return crypto.createHash('sha256').update(password + '_smarty91_salt_secure').digest('hex');
     }
@@ -753,6 +791,14 @@ class Smarty91ServerEngine {
         if (targetUser.passwordHash !== hash) {
             throw new Error('Incorrect password');
         }
+
+        // Cache targetUser into memory map so all game & settlement lookups find it instantly
+        this.users.set(targetUser.id, targetUser);
+        if (cleanPhone) {
+            this.users.set(cleanPhone, targetUser);
+            this.users.set('usr_' + cleanPhone, targetUser);
+        }
+        this._saveUsersToDisk();
 
         const token = this._createSessionToken(targetUser.id, targetUser.phone);
 
@@ -1491,12 +1537,36 @@ class Smarty91ServerEngine {
             },
             modes: modesData
         });
+
+        // Background continuous self-healing loop: verify zero pending bets were orphaned every 15s
+        if (!this._lastCatchUpCheck || (now - this._lastCatchUpCheck > 15000)) {
+            this._lastCatchUpCheck = now;
+            this.settleAllPastPendingBets().catch(err => {
+                console.warn('[Engine] Background catch-up note:', err.message);
+            });
+        }
     }
 
     async settleAllPastPendingBets() {
         const now = Date.now();
         console.log('[Self-Healing Engine] Starting comprehensive catch-up settlement for all modes...');
         
+        // Fetch all pending bets from memory AND Firestore
+        const pendingBets = Array.from(this.bets.values()).filter(b => b.status === 'PENDING' || b.status === 'pending');
+        try {
+            const fsPending = await firebaseSync.fetchAllPendingBets();
+            if (Array.isArray(fsPending)) {
+                fsPending.forEach(fb => {
+                    if (fb && fb.id && !this.bets.has(fb.id)) {
+                        this.bets.set(fb.id, fb);
+                        pendingBets.push(fb);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('[Self-Healing] Error fetching Firestore pending bets:', e.message);
+        }
+
         for (const mode of Object.keys(this.modes)) {
             const state = this.modes[mode];
             const interval = MODE_INTERVALS[mode];
@@ -1504,25 +1574,162 @@ class Smarty91ServerEngine {
 
             const currentPeriodId = this._calculatePeriodId(now, interval, mode);
             
-            const pastPendingPeriods = Array.from(this.bets.values())
-                .filter(b => b.mode === mode && (b.status === 'PENDING' || b.status === 'pending') && b.periodId < currentPeriodId)
+            const pastPendingPeriods = pendingBets
+                .filter(b => b.mode === mode && (b.status === 'PENDING' || b.status === 'pending') && String(b.periodId) < String(currentPeriodId))
                 .map(b => b.periodId);
             
             const uniquePastPeriods = Array.from(new Set(pastPendingPeriods)).sort();
 
             for (const pastPeriod of uniquePastPeriods) {
-                if (!state.settledRounds.has(pastPeriod)) {
-                    state.settledRounds.add(pastPeriod);
-                    console.log(`[Self-Healing Startup] Catch-up settling missed round for mode ${mode} period ${pastPeriod}`);
-                    try {
-                        await this._settleRound(mode, pastPeriod);
-                    } catch (err) {
-                        console.error(`[Self-Healing Startup] Error settling missed round for mode ${mode} period ${pastPeriod}:`, err);
-                    }
+                console.log(`[Self-Healing Startup] Catch-up settling missed round for mode ${mode} period ${pastPeriod}`);
+                try {
+                    await this._settleRound(mode, pastPeriod);
+                } catch (err) {
+                    console.error(`[Self-Healing Startup] Error settling missed round for mode ${mode} period ${pastPeriod}:`, err);
                 }
             }
         }
         console.log('[Self-Healing Engine] Comprehensive catch-up settlement completed.');
+    }
+
+    async reconcilePendingBetsForUser(userId) {
+        if (!userId) return;
+        try {
+            const cleanUid = String(userId).trim();
+            const cleanDigits = cleanUid.replace(/\D/g, '');
+            const cleanPhone = (cleanDigits.length === 12 && cleanDigits.startsWith('91')) ? cleanDigits.slice(2) : cleanDigits;
+
+            // Find all pending bets for this user in memory and settledBetsHistory
+            const userPendingBets = [];
+            for (const [, bet] of this.bets) {
+                if (bet && (bet.status === 'PENDING' || bet.status === 'pending')) {
+                    const bUid = String(bet.userId || '').trim();
+                    if (bUid === cleanUid || (cleanPhone && (bUid === cleanPhone || bUid === 'usr_' + cleanPhone || bUid.endsWith(cleanPhone)))) {
+                        userPendingBets.push(bet);
+                    }
+                }
+            }
+            for (const [, bet] of this.settledBetsHistory) {
+                if (bet && (bet.status === 'PENDING' || bet.status === 'pending')) {
+                    const bUid = String(bet.userId || '').trim();
+                    if (bUid === cleanUid || (cleanPhone && (bUid === cleanPhone || bUid === 'usr_' + cleanPhone || bUid.endsWith(cleanPhone)))) {
+                        if (!userPendingBets.some(b => b.id === bet.id)) {
+                            userPendingBets.push(bet);
+                        }
+                    }
+                }
+            }
+
+            // Also check Firestore for pending bets for this user
+            try {
+                const fsBets = await firebaseSync.getUserBets(cleanUid);
+                if (Array.isArray(fsBets)) {
+                    fsBets.forEach(b => {
+                        if (b && (b.status === 'PENDING' || b.status === 'pending')) {
+                            if (!userPendingBets.some(ub => ub.id === b.id)) {
+                                userPendingBets.push(b);
+                            }
+                        }
+                    });
+                }
+            } catch (e) {}
+
+            if (userPendingBets.length === 0) return;
+
+            const now = Date.now();
+            let totalRecoveredPayout = 0;
+            const settledBetsToSave = [];
+
+            for (const bet of userPendingBets) {
+                const mode = bet.mode;
+                const state = this.modes[mode];
+                if (!state) continue;
+
+                // Check if the bet's period has already ended
+                const periodId = String(bet.periodId || bet.period || '').trim();
+                if (!periodId) continue;
+
+                // Check if current active period is greater than bet's period
+                const interval = MODE_INTERVALS[mode] || 30000;
+                const currentPeriodId = String(this._calculatePeriodId(now, interval, mode)).trim();
+                if (periodId >= currentPeriodId) {
+                    continue; // Round is still active, wait for regular 0s settlement
+                }
+
+                // Check if round outcome is known
+                let winningOutcome = null;
+                if (state.settledOutcomesHistory && state.settledOutcomesHistory.has(periodId)) {
+                    winningOutcome = state.settledOutcomesHistory.get(periodId);
+                } else if (state.history) {
+                    winningOutcome = state.history.find(h => String(h.period || h.periodId).trim() === periodId);
+                }
+                if (!winningOutcome) {
+                    try {
+                        winningOutcome = await firebaseSync.fetchSettledRound(mode, periodId);
+                    } catch (e) {}
+                }
+
+                // If outcome is not yet known, generate/resolve outcome for this past period
+                if (!winningOutcome || winningOutcome.number === undefined) {
+                    try {
+                        winningOutcome = await this.getPreDecidedOutcome(mode, periodId);
+                    } catch (e) {}
+                }
+
+                if (winningOutcome && winningOutcome.number !== undefined && winningOutcome.number !== null) {
+                    const winNum = Number(winningOutcome.number);
+                    const props = NUMBER_PROPERTIES[winNum] || NUMBER_PROPERTIES[0];
+                    const settlement = this._evaluateBet(bet, winNum);
+
+                    bet.status = settlement.isWin ? 'WON' : 'LOST';
+                    bet.resultNumber = winNum;
+                    bet.resultColor = props.color;
+                    bet.resultSize = props.size;
+                    bet.payoutAmount = settlement.payoutAmount;
+                    bet.settledAt = new Date().toISOString();
+
+                    this.settledBetsHistory.set(bet.id, { ...bet });
+                    this.bets.delete(bet.id);
+                    settledBetsToSave.push(bet);
+
+                    if (settlement.isWin && settlement.payoutAmount > 0) {
+                        totalRecoveredPayout = Number((totalRecoveredPayout + settlement.payoutAmount).toFixed(2));
+                    }
+                }
+            }
+
+            if (totalRecoveredPayout > 0) {
+                let liveUser = this.getUser(cleanUid) || await this.ensureUserLoaded(cleanUid);
+                if (liveUser) {
+                    const balBefore = Number(liveUser.balance || 0);
+                    liveUser.balance = Number((balBefore + totalRecoveredPayout).toFixed(2));
+                    this.users.set(liveUser.id, liveUser);
+                    this.users.set(cleanUid, liveUser);
+                    await firebaseSync.updateUserBalance(
+                        liveUser.id,
+                        liveUser.balance,
+                        `Self-Healing Recovered Win Payout (+₹${totalRecoveredPayout})`,
+                        liveUser.bonusBalance,
+                        liveUser.requiredTurnover
+                    );
+                    console.log(`[Self-Healing Reconciliation] Successfully credited recovered payout ₹${totalRecoveredPayout} to user ${liveUser.id}`);
+                } else {
+                    await firebaseSync.incrementUserBalance(
+                        cleanUid,
+                        totalRecoveredPayout,
+                        `Self-Healing Recovered Win Payout (+₹${totalRecoveredPayout})`
+                    );
+                }
+            }
+
+            if (settledBetsToSave.length > 0) {
+                await firebaseSync.batchUpdateBetSettlements(settledBetsToSave);
+                this._scheduleSaveBets();
+                this._scheduleSaveUsers();
+            }
+        } catch (err) {
+            console.warn('[Engine] reconcilePendingBetsForUser error:', err.message);
+        }
     }
 
     async preDecideAndComputeSettlement(mode, periodId) {
@@ -1692,46 +1899,25 @@ class Smarty91ServerEngine {
         const state = this.modes[mode];
         const modeConfig = this.config.modes[mode];
 
-        // Check if we already have the pre-computed settlement package ready from the 4s step
+        // 1. Determine or retrieve outcome for this round
         let preComputed = null;
         if (state.preComputedSettlements && state.preComputedSettlements[periodId]) {
             preComputed = state.preComputedSettlements[periodId];
             delete state.preComputedSettlements[periodId];
         }
 
+        let winningNumber;
+        let isOverridden = false;
         let roundRecord;
-        let evaluatedBets = [];
 
-        if (preComputed) {
-            // Fast-Path: Use the pre-computed outcome and evaluated bets instantly
+        if (preComputed && preComputed.roundRecord) {
             roundRecord = preComputed.roundRecord;
-            
-            for (const item of preComputed.evaluatedBets) {
-                const { bet, originalBetId, settlement, user, ledgerEntry } = item;
-                const liveUser = user || this.getUser(bet.userId) || this.users.get(bet.userId);
-                if (settlement.isWin && settlement.payoutAmount > 0 && liveUser) {
-                    const balBefore = liveUser.balance;
-                    liveUser.balance = Number((liveUser.balance + settlement.payoutAmount).toFixed(2));
-                    if (ledgerEntry) {
-                        ledgerEntry.balanceBefore = balBefore;
-                        ledgerEntry.balanceAfter = liveUser.balance;
-                    }
-                }
-                if (ledgerEntry) {
-                    this.ledger.unshift(ledgerEntry);
-                }
-                this.settledBetsHistory.set(bet.id, { ...bet });
-                this.bets.delete(originalBetId);
-                item.user = liveUser;
-                evaluatedBets.push(item);
-            }
-            console.log(`[Instant Settle @ 0s] Mode ${mode} Period ${periodId} instant zero-latency flush executed. Winning number: ${roundRecord.number}`);
+            winningNumber = preComputed.winningNumber;
+            isOverridden = !!preComputed.outcomeResult?.isOverridden;
         } else {
-            // Safe fallback: Compute on-the-fly if pre-computation wasn't cached
             const outcomeResult = await this.getPreDecidedOutcome(mode, periodId);
-            const winningNumber = outcomeResult.number;
-            const isOverridden = outcomeResult.isOverridden;
-
+            winningNumber = outcomeResult.number;
+            isOverridden = !!outcomeResult.isOverridden;
             const props = NUMBER_PROPERTIES[winningNumber] || NUMBER_PROPERTIES[0];
             roundRecord = {
                 period: periodId,
@@ -1744,70 +1930,156 @@ class Smarty91ServerEngine {
                 settledAt: new Date().toISOString(),
                 isOverridden
             };
+        }
 
-            const memoryPendingBets = Array.from(this.bets.values()).filter(
-                b => b.mode === mode && String(b.periodId) === String(periodId) && (b.status === 'PENDING' || b.status === 'pending')
-            );
-            const pendingBetsMap = new Map();
-            memoryPendingBets.forEach(b => pendingBetsMap.set(b.id, b));
-            try {
-                const fsBets = await firebaseSync.fetchPendingBetsForPeriod(mode, periodId);
-                if (Array.isArray(fsBets)) {
-                    fsBets.forEach(fb => {
-                        if (!pendingBetsMap.has(fb.id)) {
-                            pendingBetsMap.set(fb.id, fb);
-                            this.bets.set(fb.id, fb);
-                        }
-                    });
-                }
-            } catch (err) {
-                console.warn('[Engine] fallback fetchPendingBetsForPeriod note:', err.message);
-            }
-            const pendingBetsForRound = Array.from(pendingBetsMap.values());
+        const props = NUMBER_PROPERTIES[winningNumber] || NUMBER_PROPERTIES[0];
 
-            for (const bet of pendingBetsForRound) {
-                const settlement = this._evaluateBet(bet, winningNumber);
-                bet.status = settlement.isWin ? 'WON' : 'LOST';
-                bet.resultNumber = winningNumber;
-                bet.resultColor = props.color;
-                bet.resultSize = props.size;
-                bet.payoutAmount = settlement.payoutAmount;
-                bet.settledAt = new Date().toISOString();
+        // 2. Collect ALL pending bets for this round (Memory + PreComputed + Firestore + Disk)
+        const pendingBetsMap = new Map();
 
-                let balanceBefore = 0;
-                let balanceAfter = 0;
-                const user = this.getUser(bet.userId) || this.users.get(bet.userId);
-                if (settlement.isWin && settlement.payoutAmount > 0) {
-                    if (user) {
-                        balanceBefore = user.balance;
-                        user.balance = Number((user.balance + settlement.payoutAmount).toFixed(2));
-                        balanceAfter = user.balance;
-                    }
-                }
-
-                let ledgerEntry = null;
-                if (settlement.isWin && settlement.payoutAmount > 0) {
-                    ledgerEntry = {
-                        id: 'LEDGER_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                        userId: bet.userId,
-                        type: 'BET_WIN_CREDIT',
-                        amount: settlement.payoutAmount,
-                        balanceBefore,
-                        balanceAfter,
-                        referenceId: bet.id,
-                        timestamp: new Date().toISOString(),
-                        description: `Won bet on ${mode} round ${periodId} (${bet.selectionLabel})`
-                    };
-                    this.ledger.unshift(ledgerEntry);
-                }
-
-                this.settledBetsHistory.set(bet.id, { ...bet });
-                this.bets.delete(bet.id);
-                evaluatedBets.push({ bet, settlement, user, ledgerEntry });
+        // Memory pending bets
+        for (const [bId, b] of this.bets) {
+            if (b && b.mode === mode && String(b.periodId) === String(periodId)) {
+                pendingBetsMap.set(bId, b);
             }
         }
 
-        // Prepend to mode history (strictly capped at max 50 rounds) - Synchronous in-memory update
+        // SettledBetsHistory if still pending
+        for (const [bId, b] of this.settledBetsHistory) {
+            if (b && b.mode === mode && String(b.periodId) === String(periodId) && (b.status === 'PENDING' || b.status === 'pending')) {
+                if (!pendingBetsMap.has(bId)) pendingBetsMap.set(bId, b);
+            }
+        }
+
+        // PreComputed bets
+        if (preComputed && Array.isArray(preComputed.evaluatedBets)) {
+            for (const item of preComputed.evaluatedBets) {
+                const b = item.bet;
+                if (b && !pendingBetsMap.has(b.id)) {
+                    pendingBetsMap.set(b.id, b);
+                }
+            }
+        }
+
+        // Cloud Firestore pending bets (guarantees offline/restarted bets are never missed)
+        try {
+            const fsBets = await firebaseSync.fetchPendingBetsForPeriod(mode, periodId);
+            if (Array.isArray(fsBets)) {
+                fsBets.forEach(fb => {
+                    if (fb && fb.id && !pendingBetsMap.has(fb.id)) {
+                        pendingBetsMap.set(fb.id, fb);
+                        this.bets.set(fb.id, fb);
+                    }
+                });
+            }
+        } catch (err) {
+            console.warn(`[Engine] Firestore fetchPendingBetsForPeriod note:`, err.message);
+        }
+
+        const allBetsForRound = Array.from(pendingBetsMap.values());
+        const evaluatedBets = [];
+        const userPayoutMap = new Map(); // userId -> { totalWin: number, wins: [] }
+
+        // 3. Evaluate each bet against winning number
+        for (const bet of allBetsForRound) {
+            const settlement = this._evaluateBet(bet, winningNumber);
+            bet.status = settlement.isWin ? 'WON' : 'LOST';
+            bet.resultNumber = winningNumber;
+            bet.resultColor = props.color;
+            bet.resultSize = props.size;
+            bet.payoutAmount = settlement.payoutAmount;
+            bet.settledAt = roundRecord.settledAt || new Date().toISOString();
+
+            this.settledBetsHistory.set(bet.id, { ...bet });
+            this.bets.delete(bet.id);
+            evaluatedBets.push({ bet, settlement });
+
+            // Group by user for atomic balance addition (eliminates multi-bet race conditions!)
+            const uid = bet.userId;
+            if (!userPayoutMap.has(uid)) {
+                userPayoutMap.set(uid, { totalWin: 0, wins: [] });
+            }
+            const userEntry = userPayoutMap.get(uid);
+            if (settlement.isWin && settlement.payoutAmount > 0) {
+                userEntry.totalWin = Number((userEntry.totalWin + settlement.payoutAmount).toFixed(2));
+                userEntry.wins.push({ bet, settlement });
+            }
+        }
+
+        // 4. ATOMIC PER-USER WINNING CREDITING & FIRESTORE SYNCHRONIZATION
+        for (const [userId, summary] of userPayoutMap.entries()) {
+            if (summary.totalWin <= 0) continue;
+
+            // Load user (memory -> disk -> Firestore)
+            let liveUser = this.getUser(userId);
+            if (!liveUser) {
+                liveUser = await this.ensureUserLoaded(userId);
+            }
+
+            let balanceBefore = 0;
+            let balanceAfter = 0;
+
+            if (liveUser) {
+                balanceBefore = Number(liveUser.balance || 0);
+                liveUser.balance = Number((balanceBefore + summary.totalWin).toFixed(2));
+                balanceAfter = liveUser.balance;
+                liveUser._localVersion = (liveUser._localVersion || 1) + 1;
+                liveUser._lastLocalUpdate = Date.now();
+
+                // Register all key aliases in memory
+                this.users.set(liveUser.id, liveUser);
+                this.users.set(userId, liveUser);
+                if (liveUser.phone) {
+                    this.users.set(liveUser.phone, liveUser);
+                    this.users.set('usr_' + liveUser.phone, liveUser);
+                }
+
+                // Add ledger entries for each winning bet
+                for (const item of summary.wins) {
+                    const lEntry = {
+                        id: 'LEDGER_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                        userId: liveUser.id,
+                        type: 'BET_WIN_CREDIT',
+                        amount: item.settlement.payoutAmount,
+                        balanceBefore,
+                        balanceAfter,
+                        referenceId: item.bet.id,
+                        timestamp: new Date().toISOString(),
+                        description: `Won bet on ${mode} round ${periodId} (${item.bet.selectionLabel || item.bet.selection})`
+                    };
+                    this.ledger.unshift(lEntry);
+                }
+
+                // Update Firestore balance (Single write per user per round!)
+                try {
+                    await firebaseSync.updateUserBalance(
+                        liveUser.id,
+                        liveUser.balance,
+                        `Bet Win Payout: ${mode} ${periodId} (+₹${summary.totalWin})`,
+                        liveUser.bonusBalance,
+                        liveUser.requiredTurnover
+                    );
+                    console.log(`[Payout Success] Credited ₹${summary.totalWin} to user ${liveUser.id} (${liveUser.phone || ''}). New balance: ₹${liveUser.balance}`);
+                } catch (fsErr) {
+                    console.error(`[Payout Error] updateUserBalance failed for user ${userId}, executing atomic increment fallback:`, fsErr.message);
+                    await firebaseSync.incrementUserBalance(
+                        liveUser.id,
+                        summary.totalWin,
+                        `Bet Win Fallback: ${mode} ${periodId} (+₹${summary.totalWin})`
+                    );
+                }
+            } else {
+                // User not found in memory/disk -> Atomically increment directly in Firestore!
+                console.warn(`[Payout Fallback] User ${userId} could not be resolved into memory. Executing direct Firestore atomic increment for ₹${summary.totalWin}`);
+                await firebaseSync.incrementUserBalance(
+                    userId,
+                    summary.totalWin,
+                    `Bet Win Auto-Credit: ${mode} ${periodId} (+₹${summary.totalWin})`
+                );
+            }
+        }
+
+        // 5. Prepend to mode history (strictly capped at max 50 rounds)
         state.history = state.history.filter(h => String(h.period || h.periodId) !== String(periodId));
         state.history.unshift(roundRecord);
         if (state.history.length > 50) state.history.length = 50;
@@ -1822,47 +2094,23 @@ class Smarty91ServerEngine {
         });
         this._saveHistoryToDisk();
 
-        // Non-blocking asynchronous schedule to local disk
+        // 6. Non-blocking asynchronous schedule to local disk
         if (evaluatedBets.length > 0) {
             this._scheduleSaveUsers();
             this._scheduleSaveBets();
         }
-
-        // Auto-prune memory rings to guarantee zero memory leaks on 512MB Render RAM
         this._pruneMemory();
 
-        // Non-blocking save of the official settled round to Firestore
+        // 7. Non-blocking save of the official settled round to Firestore
         firebaseSync.saveSettledRound(mode, roundRecord).catch(err => {
             console.warn(`[Server] Error saving settled round to Firestore:`, err.message);
         });
 
-        // Batch update all evaluated bets status in Firestore (1 batch operation, non-blocking)
+        // 8. Batch update all evaluated bets status in Firestore (1 batch operation)
         if (evaluatedBets.length > 0) {
             firebaseSync.batchUpdateBetSettlements(evaluatedBets.map(i => i.bet)).catch(err => {
                 console.warn(`[Server] Batch bet settlement sync note:`, err.message);
             });
-        }
-
-        // Immediate settlement sync: Credit and sync every winning user immediately
-        for (const item of evaluatedBets) {
-            const { bet, settlement, user } = item;
-            const targetUser = user || this.getUser(bet.userId) || this.users.get(bet.userId);
-            if (settlement.isWin && settlement.payoutAmount > 0 && targetUser) {
-                targetUser._localVersion = (targetUser._localVersion || 1) + 1;
-                targetUser._lastLocalUpdate = Date.now();
-                firebaseSync.markUserDirty(targetUser.id);
-
-                // Instantly sync balance to Firestore for ALL winning bets (no minimum amount threshold!)
-                firebaseSync.updateUserBalance(
-                    targetUser.id,
-                    targetUser.balance,
-                    `Bet Win Payout: ${mode} ${periodId} (+₹${settlement.payoutAmount})`,
-                    targetUser.bonusBalance,
-                    targetUser.requiredTurnover
-                ).catch(err => {
-                    console.warn(`[Server] Immediate win balance sync note for user ${targetUser.id}:`, err.message);
-                });
-            }
         }
 
         // 3. Check if Pause was scheduled for after current round completes
@@ -1986,20 +2234,18 @@ class Smarty91ServerEngine {
             }
 
             // Fast & reliable user lookup
-            let user = this.users.get(userId);
+            let user = this.getUser(userId);
             if (!user) {
-                this._loadUsersFromDisk();
-                user = this.users.get(userId);
-            }
-            if (!user) {
-                try {
-                    user = await firebaseSync.fetchUserFromFirestore(userId);
-                } catch (e) {
-                    console.warn('[Server] Firestore user fetch during bet placement:', e.message);
-                }
+                user = await this.ensureUserLoaded(userId);
             }
             if (!user) {
                 throw new Error('User account not found. Please log in again.');
+            }
+            this.users.set(user.id, user);
+            this.users.set(userId, user);
+            if (user.phone) {
+                this.users.set(user.phone, user);
+                this.users.set('usr_' + user.phone, user);
             }
 
             // Enforce minimum 1 approved deposit requirement to play games and place bets
@@ -2093,6 +2339,22 @@ class Smarty91ServerEngine {
             this._scheduleSaveBets();
             this._pruneMemory();
             firebaseSync.markUserDirty(userId);
+
+            // Immediately persist pending bet to Firestore Cloud so it survives server reboots/disconnects
+            firebaseSync.saveBet(betOrder).catch(err => {
+                console.warn('[Server] Error saving pending bet to Firestore:', err.message);
+            });
+
+            // Immediately persist deducted balance to Firestore Cloud
+            firebaseSync.updateUserBalance(
+                user.id,
+                user.balance,
+                `Bet Placed: ${mode} ${activePeriodId} (-₹${totalAmount})`,
+                user.bonusBalance,
+                user.requiredTurnover
+            ).catch(err => {
+                console.warn('[Server] Error syncing debited balance to Firestore:', err.message);
+            });
 
             // 1% Lifetime Betting Commission to Referrer
             this._processReferralBetCommission(user, totalAmount, mode, activePeriodId, betId);
@@ -2844,7 +3106,7 @@ class Smarty91ServerEngine {
     }
 
     getWalletSummary(userId = 'default_user') {
-        const user = this.users.get(userId) || this._ensureDefaultUser(userId, 0.00);
+        const user = this.getUser(userId) || this.users.get(userId) || this._ensureDefaultUser(userId, 0.00);
         const userTx = this.transactions.filter(t => t.userId === userId);
         const userLedger = this.ledger.filter(l => l.userId === userId);
 
